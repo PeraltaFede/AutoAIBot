@@ -6,7 +6,9 @@ import numpy as np
 import cv2
 import pygame
 import socket
+import struct
 import os
+import io
 from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
@@ -25,14 +27,14 @@ class CameraTest(object):
         self.server_socket = socket.socket()
         print("Inicializando stream...")
         self.server_socket.bind(('192.168.0.14', 8000))
-        self.server_socket.listen(1)
+        self.server_socket.listen()
         print("Esperando conexion...")
         # bandera para el while
         self.corriendo_programa = True
 
         # creando conexion para enviar datos
         self.connection, self.client_address = self.server_socket.accept()
-        # self.connection = self.connection.makefile('rb')
+        self.connection = self.connection.makefile('rb')
         print("Conexion establecida!")
 
         pygame.init()
@@ -44,23 +46,35 @@ class CameraTest(object):
 
         total_frame = 0
         # colecionando imagenes para el stream
-        print('Iniciando streaming de la camara en:', self.client_address)
+        print('Iniciando streaming de la camara en: ', self.client_address)
         e1 = cv2.getTickCount()
 
         # obtener las imagenes del stream una por una
         try:
-            stream_bytes = ' '
+            stream_bytes = " "
             while self.corriendo_programa:
-                stream_bytes += self.connection.read(1024)
-                first = stream_bytes.find('\xff\xd8')
-                last = stream_bytes.find('\xff\xd9')
-                if first != -1 and last != -1:
-                    jpg = stream_bytes[first:last + 2]
-                    stream_bytes = stream_bytes[last + 2:]
+                # Read the length of the image as a 32-bit unsigned int. If the
+                # length is zero, quit the loop
+                image_len = struct.unpack('<L', self.connection.read(struct.calcsize('<L')))[0]
+                if not image_len:
+                    break
+                # Construct a stream to hold the image data and read the image
+                # data from the connection
+                image_stream = io.BytesIO()
+                image_stream.write(self.connection.read(image_len))
+
+                image_stream.seek(0)
+                # assume bytes_io is a `BytesIO` object
+                # stream_bytes += str(self.connection.read(1024), 'utf-8')
+                # first = stream_bytes.find('\xff\xd8')
+                # last = stream_bytes.find('\xff\xd9')
+                if True:  # first != -1 and last != -1:
+                    jpg = image_stream.read()  # stream_bytes [first:last + 2]
+                    # stream_bytes = stream_bytes  # [last + 2:]
                     image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
 
                     # guardar la imagen
-                    cv2.imwrite('training_images/frame{:>05}.jpg'.format(total_frame), image)
+                    cv2.imwrite('streaming_test_img/frame{:>05}.jpg'.format(total_frame), image)
                     # mostrar la imagen
                     cv2.imshow('Computer Vision', image)
 
@@ -76,15 +90,16 @@ class CameraTest(object):
                     print('Finalizado por Cliente')
 
             e2 = cv2.getTickCount()
-            pygame.quit()
             # calcular el total de streaming
             time0 = (e2 - e1) / cv2.getTickFrequency()
             print("Duracion del streaming:", time0)
             print('Total cuadros   : ', total_frame)
         finally:
+            
+            pygame.quit()
             self.connection.close()
             self.server_socket.close()
+            os.system("pause")
 
 if __name__ == '__main__':
     CameraTest()
-    os.system("pause")

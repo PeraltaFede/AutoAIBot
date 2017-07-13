@@ -12,7 +12,9 @@ import picamera
 
 # Se crea e inicializa un zocalo de cliente para enviar los datos
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print('Esperando conexion..')
 client_socket.connect(('192.168.0.14', 8000))
+print('Conexion establecida')
 connection = client_socket.makefile('wb')
 
 try:
@@ -42,7 +44,10 @@ try:
     # Enviar una señal de datos igual a 0 para contar que ya se acabo el stream
     connection.write(struct.pack('<L', 0))
 
+except IOError as e:
+    print('Servidor del stream finalizo la conexion')
 finally:
     connection.close()
     client_socket.close()
+
 __author__ = 'federico_peralta'
