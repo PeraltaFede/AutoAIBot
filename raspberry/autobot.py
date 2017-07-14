@@ -38,6 +38,7 @@ if __name__ == '__main__':
     # Se crea e inicializa un zocalo de cliente para enviar los datos
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('192.168.0.14', 8001))
+    print('Conexion establecida!')
     autobot1.stop()
 
     try:

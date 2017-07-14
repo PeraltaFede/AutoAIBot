@@ -10,8 +10,8 @@ class ABTest(object):
 
         print("Iniciando modulo prueba de autobot")
         self.server_socket = socket.socket()
-        self.server_socket.bind(('192.168.0.9', 8001))
-        self.server_socket.listen(1)
+        self.server_socket.bind(('192.168.0.14', 8001))
+        self.server_socket.listen()
 
         print("Esperando conexion...")
         self.test_drive = True
@@ -36,32 +36,32 @@ class ABTest(object):
                         key_input = pygame.key.get_pressed()
                         # complex orders
                         if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
-                            self.connection.send("DOR")
+                            self.connection.send(b"DOR")
                             print("Delante derecha")
 
                         elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
-                            self.connection.send("DOL")
+                            self.connection.send(b"DOL")
                             print("Delante izquierda")
 
                         # simple orders
                         elif key_input[pygame.K_UP]:
-                            self.connection.send("DOF")
+                            self.connection.send(b"DOF")
                             print("Delante")
 
                         elif key_input[pygame.K_DOWN]:
-                            self.connection.send("DOB")
+                            self.connection.send(b"DOB")
                             print("Reversa")
 
                         elif key_input[pygame.K_RIGHT]:
-                            self.connection.send("DOR")
+                            self.connection.send(b"DOR")
                             print("Derecha")
 
                         elif key_input[pygame.K_LEFT]:
-                            self.connection.send("DOL")
+                            self.connection.send(b"DOL")
                             print("Izquierda")
                         elif key_input[pygame.K_x] or key_input[pygame.K_q]:
                             print('Salir')
-                            self.connection.send("DOE")
+                            self.connection.send(b"DOE")
                             self.test_drive = False
                             break
 
@@ -69,22 +69,22 @@ class ABTest(object):
                         key_input = pygame.key.get_pressed()
 
                         if key_input[pygame.K_UP]:
-                            self.connection.send("DOF")
+                            self.connection.send(b"DOF")
                             print("Delante")
 
                         elif key_input[pygame.K_DOWN]:
-                            self.connection.send("DOB")
+                            self.connection.send(b"DOB")
                             print("Reversa")
 
                         elif key_input[pygame.K_RIGHT]:
-                            self.connection.send("DOR")
+                            self.connection.send(b"DOR")
                             print("Derecha")
 
                         elif key_input[pygame.K_LEFT]:
-                            self.connection.send("DOL")
+                            self.connection.send(b"DOL")
                             print("Izquierda")
                         else:
-                            self.connection.send("DOS")
+                            self.connection.send(b"DOS")
                             print('Esperando ordenes')
 
             print('Test drive finalizado')

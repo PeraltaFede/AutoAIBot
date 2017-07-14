@@ -51,7 +51,6 @@ class CameraTest(object):
 
         # obtener las imagenes del stream una por una
         try:
-            stream_bytes = " "
             while self.corriendo_programa:
                 # Read the length of the image as a 32-bit unsigned int. If the
                 # length is zero, quit the loop
@@ -64,17 +63,12 @@ class CameraTest(object):
                 image_stream.write(self.connection.read(image_len))
 
                 image_stream.seek(0)
-                # assume bytes_io is a `BytesIO` object
-                # stream_bytes += str(self.connection.read(1024), 'utf-8')
-                # first = stream_bytes.find('\xff\xd8')
-                # last = stream_bytes.find('\xff\xd9')
-                if True:  # first != -1 and last != -1:
-                    jpg = image_stream.read()  # stream_bytes [first:last + 2]
-                    # stream_bytes = stream_bytes  # [last + 2:]
+                if True:
+                    jpg = image_stream.read()
                     image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
 
                     # guardar la imagen
-                    cv2.imwrite('streaming_test_img/frame{:>05}.jpg'.format(total_frame), image)
+                    cv2.imwrite('streamtest_img/frame{:>05}.jpg'.format(total_frame), image)
                     # mostrar la imagen
                     cv2.imshow('Computer Vision', image)
 
@@ -99,6 +93,7 @@ class CameraTest(object):
             pygame.quit()
             self.connection.close()
             self.server_socket.close()
+            cv2.destroyAllWindows()
             os.system("pause")
 
 if __name__ == '__main__':
