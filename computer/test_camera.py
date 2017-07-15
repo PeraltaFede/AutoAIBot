@@ -56,6 +56,7 @@ class CameraTest(object):
                 # length is zero, quit the loop
                 image_len = struct.unpack('<L', self.connection.read(struct.calcsize('<L')))[0]
                 if not image_len:
+                    print('Finalizado por Cliente')
                     break
                 # Construct a stream to hold the image data and read the image
                 # data from the connection
@@ -63,26 +64,23 @@ class CameraTest(object):
                 image_stream.write(self.connection.read(image_len))
 
                 image_stream.seek(0)
-                if True:
-                    jpg = image_stream.read()
-                    image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
 
-                    # guardar la imagen
-                    cv2.imwrite('streamtest_img/frame{:>05}.jpg'.format(total_frame), image)
-                    # mostrar la imagen
-                    cv2.imshow('Computer Vision', image)
+                jpg = image_stream.read()
+                image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
 
-                    total_frame += 1
-                    for event in pygame.event.get():
-                        if event.type == KEYDOWN:
-                            key_input = pygame.key.get_pressed()
-                            if key_input[pygame.K_x] or key_input[pygame.K_q]:
-                                print("Deteniendo el stream")
-                                self.corriendo_programa = False
-                                break
-                else:
-                    print('Finalizado por Cliente')
+                # guardar la imagen
+                cv2.imwrite('streamtest_img/frame{:>05}.jpg'.format(total_frame), image)
+                # mostrar la imagen
+                cv2.imshow('Computer Vision', image)
 
+                total_frame += 1
+                for event in pygame.event.get():
+                    if event.type == KEYDOWN:
+                        key_input = pygame.key.get_pressed()
+                        if key_input[pygame.K_x] or key_input[pygame.K_q]:
+                            print("Deteniendo el stream")
+                            self.corriendo_programa = False
+                            break
             e2 = cv2.getTickCount()
             # calcular el total de streaming
             time0 = (e2 - e1) / cv2.getTickFrequency()

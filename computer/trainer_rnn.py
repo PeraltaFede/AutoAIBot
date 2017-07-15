@@ -10,11 +10,24 @@ try:
 except ImportError:
     pass
 
+
+class ImageHandler(object):
+    def __init__(self):
+        # hacer una fila con los nombres de imagenes incluyendo todas las imagenes de un directorio
+        self.filename_queue = tf.train.string_input_producer(
+            tf.train.match_filenames_once("./training_images/*.jpg"), shuffle=True)
+
+        # Leer toda la imagen jpg en este caso de la dimension establecida en el agent
+        self.image_reader = tf.WholeFileReader()
+
+    def getafile(self):
+        return self.image_reader.read(self.filename_queue)
+
 print('Cargando datos para entrenamiento...')
 e0 = cv2.getTickCount()
 
-# input X: 200x240 imagenes en escala a grises, ke = the first dimension (None) will index the images in the mini-batch
-X = tf.placeholder(tf.float32, [None, 200, 240, 1])
+# input X: 320x120 imagenes en escala a grises, ke = the first dimension (None) will index the images in the mini-batch
+X = tf.placeholder(tf.float32, [None, 320, 120, 1])
 # ground truth se pone aca
 Y_ = tf.placeholder(tf.float32, [None, 3])
 # tasa de aprendizaje
@@ -71,44 +84,27 @@ cross_entropy = tf.reduce_mean(cross_entropy)  # una sola imagen a la vez sino m
 correct_prediction = tf.equal(tf.argmax(Y, 1), tf.argmax(Y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-# matplotlib visualisation
-allweights = tf.concat([tf.reshape(W1, [-1]), tf.reshape(W2, [-1]), tf.reshape(W3, [-1]), tf.reshape(W4, [-1]),
-                        tf.reshape(W5, [-1])], 0)
-allbiases = tf.concat([tf.reshape(B1, [-1]), tf.reshape(B2, [-1]), tf.reshape(B3, [-1]), tf.reshape(B4, [-1]),
-                       tf.reshape(B5, [-1])], 0)
-
 # paso de entrenamiento, la tasa de aprendizaje es un estado p completar
 train_step = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
-
+t0 = (cv2.getTickCount() - e0)/cv2.getTickFrequency()
+print('Carga de datos correcta en tiempo ', t0)
 # iniciar
+print('Iniciando la sesion ', t0)
 init = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init)
 
-# tiempo de inicio
-e1 = cv2.getTickCount()
 
-
-# ke
 def training_step(i, update_test_data, update_train_data):
 
-    # hacer una fila con los nombres de imagenes incluyendo todas las imagenes de un directorio
-    filename_queue = tf.train.string_input_producer(
-        tf.train.match_filenames_once("./images/*.jpg"))
-
-    # Leer toda la imagen jpg en este caso de la dimension establecida en el agent
-    image_reader = tf.WholeFileReader()
-
     # Leer un archivo completo de la fila
-    label_name, image_file = image_reader.read(filename_queue)
+    label_name, image_file = imghd.getafile()
 
     # Decodificar una imagen JPG a una imagen que se pueda usar en tensorflow
-
     image = tf.image.decode_jpeg(image_file)
-    label = label_name.
-
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(coord=coord)
+    label = tf.zeros(3, tf.float32)  # todo: elegir el nro de posicion de label real
+    print(label_name)
+    label[label_name[5]] = 1
 
     # learning rate decay
     max_learning_rate = 0.003
@@ -118,25 +114,35 @@ def training_step(i, update_test_data, update_train_data):
 
     # compute training values for visualisation
     if update_train_data:
-        a, c, im, w, b = sess.run([accuracy, cross_entropy, I, allweights, allbiases], {X: image, Y_: label, pkeep: 1.0})
-        print(str(i) + ": accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
+        a, c, im, w, b = sess.run(train_step, {X: image, Y_: label, pkeep: 1.0})
+        print("Accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
 
     # compute test values for visualisation
     if update_test_data:
-        a, c, im = sess.run([accuracy, cross_entropy, It], {X: mnist.test.images, Y_: mnist.test.labels, pkeep: 1.0})
-        print(str(i) + ": ********* epoch " + str(i*100//mnist.train.images.shape[0]+1) + " ********* test accuracy:" + str(a) + " test loss: " + str(c))
+        print("no data for testing")
+        # a, c, im = sess.run([accuracy, cross_entropy, It], {X: mnist.test.images, Y_: mnist.test.labels, pkeep:
+        # 1.0})
+        # print(str(i) + ": ********* epoch " + str(i*100//mnist.train.images.shape[0]+1) + " ********* test
+        # accuracy:" + str(a) + " test loss: " + str(c))
+        # the backpropagation training step"""
+    sess.run(train_step, {X: image, Y_: label, lr: learning_rate, pkeep: 0.75})
 
-    # the backpropagation training step
-    sess.run(train_step, {X: batch_X, Y_: batch_Y, lr: learning_rate, pkeep: 0.75})
+
+# tiempo de inicio
+e1 = cv2.getTickCount()
+imghd = ImageHandler()
+coord = tf.train.Coordinator()
+threads = tf.train.start_queue_runners(coord=coord)
+
+try:
+    for j in range(10000 + 1):
+        training_step(j, j % 100 == 0, j % 20 == 0)
+finally:
     coord.request_stop()
     coord.join(threads)
-
-
-# to save the animation as a movie, add save_movie=True as an argument to datavis.animate
-# to disable the visualisation use the following line instead of the datavis.animate line
-# for i in range(10000+1): training_step(i, i % 100 == 0, i % 20 == 0)
-
-print("max test accuracy: " + str(datavis.get_max_test_accuracy()))
-
-# save model
-model.save('mlp_xml/mlp.xml')
+    saver = tf.train.Saver()
+    save_path = saver.save(sess, "/model.ckpt")
+    print("Model saved in file: %s" % save_path)
+    t0 = (cv2.getTickCount() - e1) / cv2.getTickFrequency()
+    print("Tiempo de entrenamiento: ", t0)
+    sess.close()

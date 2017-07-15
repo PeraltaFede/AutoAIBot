@@ -34,7 +34,7 @@ class Autobot(object):
 
 if __name__ == '__main__':
 
-    autobot1 = Autobot(left=(4, 14), right=(17, 18))
+    autobot1 = Autobot(left=(27, 22), right=(10, 9))
     # Se crea e inicializa un zocalo de cliente para enviar los datos
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('192.168.0.14', 8001))
