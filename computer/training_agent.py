@@ -3,6 +3,7 @@ import struct
 import threading
 # noinspection PyCompatibility
 import socketserver
+import os
 
 import cv2
 import numpy as np
@@ -33,9 +34,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
         try:
             global running, saved_frame, roi
             saved_frame = 0
-            frame = 0
             while running:
-                frame += 1
                 cv2.imshow('CV', realimg)
                 for event in pygame.event.get():
                     if event.type == KEYDOWN:
@@ -43,32 +42,32 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         # ordenes de dos teclas
                         if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
                             print("Delante Derecha")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 1), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
                             self.connection.send(b"DOR")
                             saved_frame += 1
 
                         elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
                             print("Delante Izquierda")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 0), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
                             self.connection.send(b"DOL")
                             saved_frame += 1
 
                             # ordenes una tecla
                         elif key_input[pygame.K_UP]:
                             print("Delante")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 2), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
                             self.connection.send(b"DOF")
                             saved_frame += 1
 
                         elif key_input[pygame.K_RIGHT]:
                             print("Derecha")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 1), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
                             self.connection.send(b"DOR")
                             saved_frame += 1
 
                         elif key_input[pygame.K_LEFT]:
                             print("Izquierda")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 0), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
                             self.connection.send(b"DOL")
                             saved_frame += 1
 
@@ -88,19 +87,19 @@ class AutobotThread(socketserver.StreamRequestHandler):
 
                         if key_input[pygame.K_UP]:
                             print("Delante")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 2), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
                             self.connection.send(b"DOF")
                             saved_frame += 1
 
                         elif key_input[pygame.K_RIGHT]:
                             print("Derecha")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 1), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
                             self.connection.send(b"DOR")
                             saved_frame += 1
 
                         elif key_input[pygame.K_LEFT]:
                             print("Izquierda")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(frame, 0), roi)
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
                             self.connection.send(b"DOL")
                             saved_frame += 1
 
@@ -131,7 +130,6 @@ class VideoThread(socketserver.StreamRequestHandler):
         # obtener las imagenes del stream una por una
         try:
             while running:
-
                 # Read the length of the image as a 32-bit unsigned int. If the
                 # length is zero, quit the loop
                 image_len = struct.unpack('<L', self.rfile.read(struct.calcsize('<L')))[0]
@@ -155,8 +153,6 @@ class VideoThread(socketserver.StreamRequestHandler):
                 # cv2.imwrite('driving_images/frame{:>05}.jpg'.format(total_frame), realimg)
                 # cv2.imshow('Computer Vision', realimg)
                 total_frame += 1
-
-            cv2.destroyAllWindows()
         finally:
             self.finish()
 
@@ -192,7 +188,7 @@ if __name__ == '__main__':
     e1 = cv2.getTickCount()
     # Start new Threads
     ThreadServer()
-    """
+
     e2 = cv2.getTickCount()
     # calcular el total de streaming
     time0 = (e2 - e1) / cv2.getTickFrequency()
@@ -201,4 +197,3 @@ if __name__ == '__main__':
     print('Total cuadros guardados : ', saved_frame)
     print('Total cuadros desechados: ', total_frame - saved_frame)
     os.system('pause')
-    """
