@@ -12,7 +12,7 @@ import picamera
 
 # Se crea e inicializa un zocalo de cliente para enviar los datos
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print('Esperando conexion..')
+print('Esperando conexion de video..')
 client_socket.connect(('192.168.0.13', 8000))
 print('Conexion establecida')
 connection = client_socket.makefile('wb')
@@ -28,7 +28,7 @@ try:
         stream = io.BytesIO()   # envio de datos por bytes IO
 
         # envio de video formato JPEG
-        for foo in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
+        for _ in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
             # Enviar el tamaño de la imagen a ser envia y flushear para asegurar el envio
             connection.write(struct.pack('<L', stream.tell()))
             connection.flush()

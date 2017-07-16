@@ -20,9 +20,12 @@ except ImportError:
 
 class AutobotThread(socketserver.StreamRequestHandler):
 
-    def hand(self):
+    def handle(self):
 
         pygame.init()
+        pygame.display.set_mode((20, 20), 0, 24)
+        pygame.display.set_caption("Teclado")
+
         print("Conexion establecida en Autobot: ", self.client_address)
         print('Empieza a coleccionar datos manejando.\nUtiliza las flechas '
               'para manejar. Solo se guardan los datos Arriba, Izq., Der.')
@@ -126,7 +129,7 @@ class VideoThread(socketserver.StreamRequestHandler):
             while running:
                 # Read the length of the image as a 32-bit unsigned int. If the
                 # length is zero, quit the loop
-                image_len = struct.unpack('<L', self.rfile.read(struct.calcsize('<L')))[0]
+                image_len = struct.unpack('<L', self.connection.read(struct.calcsize('<L')))[0]
                 if not image_len:
                     print('Finalizado por Cliente')
                     break
@@ -143,7 +146,7 @@ class VideoThread(socketserver.StreamRequestHandler):
 
                 # region es Y, X
                 roi = image[120:240, :]
-                realimg = cv2.rectangle(realimg, (0, 120), (320, 240), (30, 230, 30), 1)
+                # realimg = cv2.rectangle(realimg, (0, 120), (320, 240), (30, 230, 30), 1)
                 # mostrar la imagen
                 cv2.imshow('Computer Vision', realimg)
                 total_frame += 1
@@ -167,6 +170,8 @@ class ThreadServer(object):
     autobot_thread.start()
     video_thread = threading.Thread(target=server_thread2, args=('192.168.0.13', 8000))
     video_thread.start()
+    autobot_thread.join()
+    video_thread.join()
 
 if __name__ == '__main__':
 

@@ -36,9 +36,10 @@ if __name__ == '__main__':
 
     autobot1 = Autobot(left=(27, 22), right=(10, 9))
     # Se crea e inicializa un zocalo de cliente para enviar los datos
+    print('Esperando conexion del autobot..')
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('192.168.0.13', 8001))
-    print('Conexion establecida!')
+    print('Conexion del autobot establecida!')
     autobot1.stop()
 
     try:
