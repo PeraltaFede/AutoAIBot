@@ -64,7 +64,8 @@ class VideoThread(threading.Thread):
 
                 # envio de video formato JPEG
                 for _ in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
-                    print("Enviando img")
+                    if not running:
+                        break
                     # Enviar el tamaño de la imagen a ser envia y flushear para asegurar el envio
                     self.connection.write(struct.pack('<L', stream.tell()))
                     self.connection.flush()
@@ -74,11 +75,10 @@ class VideoThread(threading.Thread):
                     # si ya se establecio conexion hace mas de 600 segundos detener
                     if time.time() - start > 600:
                         break
-                    elif not running:
-                        break
                     # situar al stream en una nueva posicion para la proxima captura
                     stream.seek(0)
                     stream.truncate()
+
             # Enviar una señal de datos igual a 0 para contar que ya se acabo el stream
             self.connection.write(struct.pack('<L', 0))
 

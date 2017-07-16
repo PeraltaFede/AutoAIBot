@@ -163,12 +163,12 @@ class VideoThread(threading.Thread):
 
                 jpg = image_stream.read()
                 image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
-                realimg = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+
                 # region es Y, X
                 roi = image[120:240, :]
-                realimg = cv2.rectangle(realimg, (0, 120), (320, 240), (30, 230, 30), 2)
+                image = cv2.rectangle(image, (0, 120), (320, 240), (30, 230, 30), 1)
                 # mostrar la imagen
-                cv2.imshow('Computer Vision', realimg)
+                cv2.imshow('Computer Vision', image)
                 total_frame += 1
             cv2.destroyAllWindows()
         finally:
