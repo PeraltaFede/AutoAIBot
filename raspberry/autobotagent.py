@@ -83,6 +83,7 @@ class VideoThread(threading.Thread):
 
         except IOError:
             print('Servidor del stream finalizo la conexion')
+            print(IOError)
         finally:
             self.connection.close()
             self.camera_socket.close()
