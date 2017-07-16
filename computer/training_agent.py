@@ -26,6 +26,7 @@ class AgentTrainer(object):
         self.server_socket.bind(('192.168.0.13', 8000))
         self.server_socket.listen()
         self.connection, self.address = self.server_socket.accept()
+        self.connection = self.connection.makefile('rb')
         print("Stream de video aceptado.")
         print("Iniciando stream de control del Autobot, esperando conexion..")
         self.server2_socket = socket.socket()
@@ -70,11 +71,12 @@ class AgentTrainer(object):
 
                 jpg = image_stream.read()
                 image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+                realimg = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
                 # region es Y, X
                 roi = image[120:240, :]
-                image = cv2.rectangle(image, (0, 120), (320, 240), (30, 230, 30), 2)
+                realimg = cv2.rectangle(realimg, (0, 120), (320, 240), (30, 230, 30), 2)
                 # mostrar la imagen
-                cv2.imshow('Computer Vision', image)
+                cv2.imshow('Computer Vision', realimg)
 
                 frame += 1
                 total_frame += 1

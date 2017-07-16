@@ -6,6 +6,7 @@ import socket
 import struct
 import time
 import picamera
+import threading
 from gpiozero import Motor
 
 
@@ -34,67 +35,109 @@ class Autobot(object):
         self.left_motor.stop()
         self.right_motor.stop()
 
-# Se crea e inicializa un zocalo de cliente para enviar los datos
-camera_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print('Esperando conexion de la camara..')
-camera_socket.connect(('192.168.0.13', 8000))
-print('Conexion establecida!\nEsperando conexion del controlador del auto')
-connection = camera_socket.makefile('wb')
 
-autobot1 = Autobot(left=(27, 22), right=(10, 9))
-# Se crea e inicializa un zocalo de cliente para enviar los datos
-driver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-driver_socket.connect(('192.168.0.13', 8001))
-print('Conexion establecida!')
-autobot1.stop()
+class VideoThread(threading.Thread):
 
-try:
-    with picamera.PiCamera() as camera:
-        # resolucion de la camara, cuadros por segundo
-        camera.resolution = (320, 240)
-        camera.framerate = 10
-        # se duerme por 2 segundos para inicializar
-        time.sleep(2)
-        start = time.time()     # tiempo de inicio
-        stream = io.BytesIO()   # envio de datos por bytes IO
+    def __init__(self, threadid, name):
+        threading.Thread.__init__(self)
+        self.threadID = threadid
+        self.name = name
+        # Se crea e inicializa un zocalo de cliente para enviar los datos
+        self.camera_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('Esperando conexion de la camara..')
+        self.camera_socket.connect(('192.168.0.13', 8000))
+        print('Stream de la camara establecida!')
+        self.connection = self.camera_socket.makefile('wb')
 
-        # envio de video formato JPEG
-        for foo in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
-            # Enviar el tamaño de la imagen a ser envia y flushear para asegurar el envio
-            connection.write(struct.pack('<L', stream.tell()))
-            connection.flush()
-            # rebobinar la imagen y enviarla como tal
-            stream.seek(0)
-            connection.write(stream.read())
-            received = driver_socket.recv(1024).decode("utf-8")
-            if received == "DOF":
-                autobot1.foward()
-            elif received == "DOR":
-                autobot1.right()
-            elif received == "DOL":
-                autobot1.left()
-            elif received == "DOB":
-                autobot1.backwards()
-            elif received == "DOS":
-                autobot1.stop()
-            elif received == "DOE":
-                driving = False
-                print("Recibido comando de finalizacion...")
-                break
-            # si ya se establecio conexion hace mas de 600 segundos detener
-            if time.time() - start > 600:
-                break
-            # situar al stream en una nueva posicion para la proxima captura
-            stream.seek(0)
-            stream.truncate()
-    # Enviar una señal de datos igual a 0 para contar que ya se acabo el stream
-    connection.write(struct.pack('<L', 0))
+    def run(self):
+        global running
+        print("Starting " + self.name)
+        try:
+            with picamera.PiCamera() as camera:
+                # resolucion de la camara, cuadros por segundo
+                camera.resolution = (320, 240)
+                camera.framerate = 10
+                # se duerme por 2 segundos para inicializar
+                time.sleep(2)
+                start = time.time()  # tiempo de inicio
+                stream = io.BytesIO()  # envio de datos por bytes IO
 
-except IOError as e:
-    print('Servidor del stream finalizo la conexion')
-finally:
-    connection.close()
-    camera_socket.close()
-    driver_socket.close()
+                # envio de video formato JPEG
+                for _ in camera.capture_continuous(stream, 'jpeg', use_video_port=True):
+                    # Enviar el tamaño de la imagen a ser envia y flushear para asegurar el envio
+                    self.connection.write(struct.pack('<L', stream.tell()))
+                    self.connection.flush()
+                    # rebobinar la imagen y enviarla como tal
+                    stream.seek(0)
+                    self.connection.write(stream.read())
+                    # si ya se establecio conexion hace mas de 600 segundos detener
+                    if time.time() - start > 600:
+                        break
+                    elif running:
+                        break
+                    # situar al stream en una nueva posicion para la proxima captura
+                    stream.seek(0)
+                    stream.truncate()
+            # Enviar una señal de datos igual a 0 para contar que ya se acabo el stream
+            self.connection.write(struct.pack('<L', 0))
+
+        except IOError:
+            print('Servidor del stream finalizo la conexion')
+        finally:
+            self.connection.close()
+            self.camera_socket.close()
+
+
+class AutobotThread(threading.Thread):
+
+    def __init__(self, threadid, name):
+        global running
+        threading.Thread.__init__(self)
+        self.threadID = threadid
+        self.name = name
+        self.autobot1 = Autobot(left=(27, 22), right=(10, 9))
+        # Se crea e inicializa un zocalo de cliente para enviar los datos
+        self.driver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('Esperando conexion del conductor..')
+        self.driver_socket.connect(('192.168.0.13', 8001))
+        print('Conexion establecida!')
+        self.autobot1.stop()
+
+    def run(self):
+        print("Starting " + self.name)
+        try:
+            while True:
+                print('Esperando comandos')
+                received = self.driver_socket.recv(1024).decode("utf-8")
+                if received == "DOF":
+                    self.autobot1.foward()
+                elif received == "DOR":
+                    self.autobot1.right()
+                elif received == "DOL":
+                    self.autobot1.left()
+                elif received == "DOB":
+                    self.autobot1.backwards()
+                elif received == "DOS":
+                    self.autobot1.stop()
+                elif received == "DOE":
+                    global running
+                    running = False
+                    print("Recibido comando de finalizacion...")
+                    break
+
+        finally:
+            self.driver_socket.close()
+
+
+if __name__ == '__main__':
+    drivethread = AutobotThread(1, "Autobot-Thread")
+    camerathread = VideoThread(2, "Camera-Thread")
+
+    running = True
+    # Start new Threads
+    drivethread.start()
+    camerathread.start()
+    drivethread.join()
+    camerathread.join()
 
 __author__ = 'federico_peralta'
