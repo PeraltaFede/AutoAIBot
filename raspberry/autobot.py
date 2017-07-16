@@ -44,8 +44,6 @@ if __name__ == '__main__':
     try:
         driving = True
         while driving:
-            # client_socket.send(autobot1.ready)
-            print('Esperando comandos')
             received = client_socket.recv(1024).decode("utf-8")
             if received == "DOF":
                 autobot1.foward()

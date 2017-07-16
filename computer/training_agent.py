@@ -1,8 +1,8 @@
 import io
-import os
-import socket
 import struct
 import threading
+# noinspection PyCompatibility
+import socketserver
 
 import cv2
 import numpy as np
@@ -18,24 +18,12 @@ except ImportError:
     pass
 
 
-class AutobotThread(threading.Thread):
+class AutobotThread(socketserver.StreamRequestHandler):
 
-    def __init__(self, threadid, name):
-
-        threading.Thread.__init__(self)
-        self.threadID = threadid
-        self.name = name
-        print("Iniciando stream de control del Autobot, esperando conexion..")
-        self.server2_socket = socket.socket()
-        self.server2_socket.bind(('192.168.0.13', 8001))
-        self.server2_socket.listen()
-        self.connection2, self.address2 = self.server2_socket.accept()
-        print("Autobot conectado.")
-
-    def run(self):
+    def hand(self):
 
         pygame.init()
-        print("Conexion establecida en Autobot: ", self.address2)
+        print("Conexion establecida en Autobot: ", self.client_address)
         print('Empieza a coleccionar datos manejando.\nUtiliza las flechas '
               'para manejar. Solo se guardan los datos Arriba, Izq., Der.')
 
@@ -46,46 +34,45 @@ class AutobotThread(threading.Thread):
                 for event in pygame.event.get():
                     if event.type == KEYDOWN:
                         key_input = pygame.key.get_pressed()
-
                         # ordenes de dos teclas
                         if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
                             print("Delante Derecha")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 1), roi)
-                            self.connection2.send(b"DOR")
+                            self.connection.send(b"DOR")
                             saved_frame += 1
 
                         elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
                             print("Delante Izquierda")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 0), roi)
-                            self.connection2.send(b"DOL")
+                            self.connection.send(b"DOL")
                             saved_frame += 1
 
                             # ordenes una tecla
                         elif key_input[pygame.K_UP]:
                             print("Delante")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 2), roi)
-                            self.connection2.send(b"DOF")
+                            self.connection.send(b"DOF")
                             saved_frame += 1
 
                         elif key_input[pygame.K_RIGHT]:
                             print("Derecha")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 1), roi)
-                            self.connection2.send(b"DOR")
+                            self.connection.send(b"DOR")
                             saved_frame += 1
 
                         elif key_input[pygame.K_LEFT]:
                             print("Izquierda")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 0), roi)
-                            self.connection2.send(b"DOL")
+                            self.connection.send(b"DOL")
                             saved_frame += 1
 
                         elif key_input[pygame.K_DOWN]:
-                            self.connection2.send(b"DOB")
+                            self.connection.send(b"DOB")
                             print("Reversa")
 
                         elif key_input[pygame.K_x] or key_input[pygame.K_q]:
                             print("Detener el programa")
-                            self.connection2.send(b"DOE")
+                            self.connection.send(b"DOE")
                             running = False
                             break
 
@@ -96,89 +83,92 @@ class AutobotThread(threading.Thread):
                         if key_input[pygame.K_UP]:
                             print("Delante")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 2), roi)
-                            self.connection2.send(b"DOF")
+                            self.connection.send(b"DOF")
                             saved_frame += 1
 
                         elif key_input[pygame.K_RIGHT]:
                             print("Derecha")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 1), roi)
-                            self.connection2.send(b"DOR")
+                            self.connection.send(b"DOR")
                             saved_frame += 1
 
                         elif key_input[pygame.K_LEFT]:
                             print("Izquierda")
                             cv2.imwrite('training_images/frame{:>05}-{:>01}'.format(frame, 0), roi)
-                            self.connection2.send(b"DOL")
+                            self.connection.send(b"DOL")
                             saved_frame += 1
 
                         elif key_input[pygame.K_DOWN]:
-                            self.connection2.send(b"DOB")
+                            self.connection.send(b"DOB")
                             print("Reversa")
 
                         else:
-                            self.connection2.send(b"DOS")
+                            self.connection.send(b"DOS")
                             print('Esperando ordenes')
 
             pygame.quit()
             cv2.destroyAllWindows()
         finally:
-            self.connection2.close()
-            self.server2_socket.close()
+            self.connection.close()
+            self.finish()
 
 
-class VideoThread(threading.Thread):
+class VideoThread(socketserver.StreamRequestHandler):
 
-    def __init__(self, threadid, name):
+    name = "Video-Thread"
 
-        threading.Thread.__init__(self)
-        self.threadID = threadid
-        self.name = name
-        print("Iniciando stream de video, esperando conexion...")
-        self.server_socket = socket.socket()
-        self.server_socket.bind(('192.168.0.13', 8000))
-        self.server_socket.listen()
-        self.connection, self.address = self.server_socket.accept()
-        self.connection = self.connection.makefile('rb')
-        print("Stream de video aceptado.")
-
-    def run(self):
+    def handle(self):
         global running, roi, total_frame
-        print("Conexion establecida video: ", self.address)
+        print("Conexion establecida video: ", self.client_address)
 
         # obtener las imagenes del stream una por una
         try:
             while running:
                 # Read the length of the image as a 32-bit unsigned int. If the
                 # length is zero, quit the loop
-                image_len = struct.unpack('<L', self.connection.read(struct.calcsize('<L')))[0]
+                image_len = struct.unpack('<L', self.rfile.read(struct.calcsize('<L')))[0]
                 if not image_len:
                     print('Finalizado por Cliente')
                     break
                 # Construct a stream to hold the image data and read the image
                 # data from the connection
                 image_stream = io.BytesIO()
-                image_stream.write(self.connection.read(image_len))
+                image_stream.write(self.rfile.read(image_len))
 
                 image_stream.seek(0)
 
                 jpg = image_stream.read()
+                realimg = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
                 image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
 
                 # region es Y, X
                 roi = image[120:240, :]
-                image = cv2.rectangle(image, (0, 120), (320, 240), (30, 230, 30), 1)
+                realimg = cv2.rectangle(realimg, (0, 120), (320, 240), (30, 230, 30), 1)
                 # mostrar la imagen
-                cv2.imshow('Computer Vision', image)
+                cv2.imshow('Computer Vision', realimg)
                 total_frame += 1
             cv2.destroyAllWindows()
         finally:
             self.connection.close()
-            self.server_socket.close()
+            self.finish()
+
+
+class ThreadServer(object):
+
+    def server_thread(host, port):
+        server = socketserver.TCPServer((host, port), AutobotThread)
+        server.serve_forever()
+
+    def server_thread2(host, port):
+        server = socketserver.TCPServer((host, port), VideoThread)
+        server.serve_forever()
+
+    autobot_thread = threading.Thread(target=server_thread, args=('192.168.0.13', 8001))
+    autobot_thread.start()
+    video_thread = threading.Thread(target=server_thread2, args=('192.168.0.13', 8000))
+    video_thread.start()
 
 if __name__ == '__main__':
-
-    drivethread = AutobotThread(1, "Autobot-Thread")
-    camerathread = VideoThread(2, "Camera-Thread")
 
     running = True
     saved_frame = 0
@@ -186,10 +176,8 @@ if __name__ == '__main__':
     roi = None
     e1 = cv2.getTickCount()
     # Start new Threads
-    camerathread.start()
-    drivethread.start()
-    drivethread.join()
-    camerathread.join()
+    ThreadServer()
+    """
     e2 = cv2.getTickCount()
     # calcular el total de streaming
     time0 = (e2 - e1) / cv2.getTickFrequency()
@@ -198,3 +186,4 @@ if __name__ == '__main__':
     print('Total cuadros guardados : ', saved_frame)
     print('Total cuadros desechados: ', total_frame - saved_frame)
     os.system('pause')
+    """
