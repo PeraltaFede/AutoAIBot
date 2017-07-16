@@ -6,7 +6,33 @@ import socket
 import struct
 import time
 import picamera
-from raspberry.autobot import Autobot
+from gpiozero import Motor
+
+
+class Autobot(object):
+    def __init__(self, left=None, right=None):
+        self.left_motor = Motor(*left)
+        self.right_motor = Motor(*right)
+
+    def foward(self, speed=1):
+        self.left_motor.forward(speed)
+        self.right_motor.forward(speed)
+
+    def backwards(self, speed=1):
+        self.left_motor.backward(speed)
+        self.right_motor.backward(speed)
+
+    def left(self, speed=1):
+        self.left_motor.stop()
+        self.right_motor.forward(speed)
+
+    def right(self, speed=1):
+        self.left_motor.forward(speed)
+        self.right_motor.stop()
+
+    def stop(self):
+        self.left_motor.stop()
+        self.right_motor.stop()
 
 # Se crea e inicializa un zocalo de cliente para enviar los datos
 camera_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
