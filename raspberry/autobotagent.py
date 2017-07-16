@@ -135,8 +135,8 @@ if __name__ == '__main__':
 
     running = True
     # Start new Threads
-    drivethread.start()
     camerathread.start()
+    drivethread.start()
     drivethread.join()
     camerathread.join()
 
