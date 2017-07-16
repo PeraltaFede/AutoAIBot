@@ -10,7 +10,7 @@ class ABTest(object):
 
         print("Iniciando modulo prueba de autobot")
         self.server_socket = socket.socket()
-        self.server_socket.bind(('192.168.0.14', 8001))
+        self.server_socket.bind(('192.168.0.13', 8001))
         self.server_socket.listen()
 
         print("Esperando conexion...")

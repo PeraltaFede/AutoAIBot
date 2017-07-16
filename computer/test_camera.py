@@ -26,7 +26,7 @@ class CameraTest(object):
 
         self.server_socket = socket.socket()
         print("Inicializando stream...")
-        self.server_socket.bind(('192.168.0.14', 8000))
+        self.server_socket.bind(('192.168.0.13', 8000))
         self.server_socket.listen()
         print("Esperando conexion...")
         # bandera para el while

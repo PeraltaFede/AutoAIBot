@@ -37,7 +37,7 @@ if __name__ == '__main__':
     autobot1 = Autobot(left=(27, 22), right=(10, 9))
     # Se crea e inicializa un zocalo de cliente para enviar los datos
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('192.168.0.14', 8001))
+    client_socket.connect(('192.168.0.13', 8001))
     print('Conexion establecida!')
     autobot1.stop()
 
@@ -45,6 +45,7 @@ if __name__ == '__main__':
         driving = True
         while driving:
             # client_socket.send(autobot1.ready)
+            print('Esperando comandos')
             received = client_socket.recv(1024).decode("utf-8")
             if received == "DOF":
                 autobot1.foward()
@@ -58,7 +59,7 @@ if __name__ == '__main__':
                 autobot1.stop()
             elif received == "DOE":
                 driving = False
-                print("Received end command, shutting down...")
+                print("Recibido comando de finalizacion...")
                 break
 
     finally:

@@ -1,10 +1,11 @@
-import numpy as np
-import cv2
-import pygame
-import socket
 import io
-import struct
 import os
+import socket
+import struct
+
+import cv2
+import numpy as np
+import pygame
 from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
@@ -22,14 +23,14 @@ class AgentTrainer(object):
 
         print("Iniciando stream de video, esperando conexion...")
         self.server_socket = socket.socket()
-        self.server_socket.bind(('192.168.0.9', 8000))
-        self.server_socket.listen(1)
+        self.server_socket.bind(('192.168.0.13', 8000))
+        self.server_socket.listen()
         self.connection, self.address = self.server_socket.accept()
         print("Stream de video aceptado.")
         print("Iniciando stream de control del Autobot, esperando conexion..")
         self.server2_socket = socket.socket()
-        self.server2_socket.bind(('192.168.0.9', 8001))
-        self.server2_socket.listen(1)
+        self.server2_socket.bind(('192.168.0.13', 8001))
+        self.server2_socket.listen()
         self.connection2, self.address2 = self.server2_socket.accept()
         print("Autobot conectado.")
 

@@ -1,7 +1,4 @@
 """
-Con el modulo PiCamera se obtienen imagenes de captura
-rapida para poder enviarlos a la computadora
-
 IMPORTANTE: iniciar esto segundo para asegurar que el servidor esta escuchando
 """
 import io
@@ -9,13 +6,21 @@ import socket
 import struct
 import time
 import picamera
+from raspberry.autobot import Autobot
 
 # Se crea e inicializa un zocalo de cliente para enviar los datos
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print('Esperando conexion..')
-client_socket.connect(('192.168.0.13', 8000))
-print('Conexion establecida')
-connection = client_socket.makefile('wb')
+camera_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print('Esperando conexion de la camara..')
+camera_socket.connect(('192.168.0.13', 8000))
+print('Conexion establecida!\nEsperando conexion del controlador del auto')
+connection = camera_socket.makefile('wb')
+
+autobot1 = Autobot(left=(27, 22), right=(10, 9))
+# Se crea e inicializa un zocalo de cliente para enviar los datos
+driver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+driver_socket.connect(('192.168.0.13', 8001))
+print('Conexion establecida!')
+autobot1.stop()
 
 try:
     with picamera.PiCamera() as camera:
@@ -35,6 +40,21 @@ try:
             # rebobinar la imagen y enviarla como tal
             stream.seek(0)
             connection.write(stream.read())
+            received = driver_socket.recv(1024).decode("utf-8")
+            if received == "DOF":
+                autobot1.foward()
+            elif received == "DOR":
+                autobot1.right()
+            elif received == "DOL":
+                autobot1.left()
+            elif received == "DOB":
+                autobot1.backwards()
+            elif received == "DOS":
+                autobot1.stop()
+            elif received == "DOE":
+                driving = False
+                print("Recibido comando de finalizacion...")
+                break
             # si ya se establecio conexion hace mas de 600 segundos detener
             if time.time() - start > 600:
                 break
@@ -48,6 +68,7 @@ except IOError as e:
     print('Servidor del stream finalizo la conexion')
 finally:
     connection.close()
-    client_socket.close()
+    camera_socket.close()
+    driver_socket.close()
 
 __author__ = 'federico_peralta'
