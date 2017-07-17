@@ -8,7 +8,6 @@ import os
 import cv2
 import numpy as np
 import pygame
-from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
 # TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD. debe funcionar SOLO recibiendo imagenes y enviando la direccion
@@ -32,84 +31,71 @@ class AutobotThread(socketserver.StreamRequestHandler):
               'para manejar. Solo se guardan los datos Arriba, Izq., Der.')
 
         try:
-            global running, saved_frame, roi
+            global running, saved_frame, roi, realimg
             saved_frame = 0
+            currentstate = 3  # 0 = izquierda ; 1 = derecha; 2 = delante ; 3 = reversa; 4 = stop
             while running:
-                cv2.imshow('CV', realimg)
-                for event in pygame.event.get():
-                    if event.type == KEYDOWN:
-                        key_input = pygame.key.get_pressed()
-                        # ordenes de dos teclas
-                        if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
-                            print("Delante Derecha")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-                            self.connection.send(b"DOR")
-                            saved_frame += 1
+                cv2.imshow('Computer vision', realimg)
+                key_input = pygame.key.get_pressed()
+                # ordenes de dos teclas
+                if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
+                    print("Delante Derecha")
+                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                    if not currentstate == 1:
+                        self.connection.send(b"DOR")
+                        currentstate = 1
+                    saved_frame += 1
 
-                        elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
-                            print("Delante Izquierda")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-                            self.connection.send(b"DOL")
-                            saved_frame += 1
+                elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
+                    print("Delante Izquierda")
+                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                    if not currentstate == 0:
+                        self.connection.send(b"DOL")
+                        currentstate = 0
+                    saved_frame += 1
 
-                            # ordenes una tecla
-                        elif key_input[pygame.K_UP]:
-                            print("Delante")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
-                            self.connection.send(b"DOF")
-                            saved_frame += 1
+                    # ordenes una tecla
+                elif key_input[pygame.K_UP]:
+                    print("Delante")
+                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
+                    if not currentstate == 2:
+                        self.connection.send(b"DOF")
+                        currentstate = 2
+                    saved_frame += 1
 
-                        elif key_input[pygame.K_RIGHT]:
-                            print("Derecha")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-                            self.connection.send(b"DOR")
-                            saved_frame += 1
+                elif key_input[pygame.K_RIGHT]:
+                    print("Derecha")
+                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                    if not currentstate == 1:
+                        self.connection.send(b"DOR")
+                        currentstate = 1
+                    saved_frame += 1
 
-                        elif key_input[pygame.K_LEFT]:
-                            print("Izquierda")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-                            self.connection.send(b"DOL")
-                            saved_frame += 1
+                elif key_input[pygame.K_LEFT]:
+                    print("Izquierda")
+                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                    if not currentstate == 0:
+                        self.connection.send(b"DOL")
+                        currentstate = 0
+                    saved_frame += 1
 
-                        elif key_input[pygame.K_DOWN]:
-                            self.connection.send(b"DOB")
-                            print("Reversa")
+                elif key_input[pygame.K_DOWN]:
+                    if not currentstate == 3:
+                        self.connection.send(b"DOB")
+                        currentstate = 3
+                    print("Reversa")
 
-                        elif key_input[pygame.K_x] or key_input[pygame.K_q]:
-                            print("Detener el programa")
-                            self.connection.send(b"DOE")
-                            running = False
-                            break
+                elif key_input[pygame.K_x] or key_input[pygame.K_q]:
+                    print("Detener el programa")
+                    self.connection.send(b"DOE")
+                    running = False
+                    break
 
-                    elif event.type == pygame.KEYUP:
-
-                        key_input = pygame.key.get_pressed()
-
-                        if key_input[pygame.K_UP]:
-                            print("Delante")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
-                            self.connection.send(b"DOF")
-                            saved_frame += 1
-
-                        elif key_input[pygame.K_RIGHT]:
-                            print("Derecha")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-                            self.connection.send(b"DOR")
-                            saved_frame += 1
-
-                        elif key_input[pygame.K_LEFT]:
-                            print("Izquierda")
-                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-                            self.connection.send(b"DOL")
-                            saved_frame += 1
-
-                        elif key_input[pygame.K_DOWN]:
-                            self.connection.send(b"DOB")
-                            print("Reversa")
-
-                        else:
-                            self.connection.send(b"DOS")
-                            print('Esperando ordenes')
+                else:
+                    if not currentstate == 4:
+                        currentstate = 4
+                        self.connection.send(b"DOS")
+                    print('Esperando ordenes')
 
             pygame.quit()
             cv2.destroyAllWindows()

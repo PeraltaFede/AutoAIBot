@@ -58,6 +58,7 @@ if __name__ == '__main__':
                 autobot1.stop()
             elif received == "DOE":
                 driving = False
+                autobot1.stop()
                 print("Recibido comando de finalizacion...")
                 break
 
