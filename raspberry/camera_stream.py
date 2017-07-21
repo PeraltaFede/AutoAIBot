@@ -44,7 +44,7 @@ try:
     # Enviar una señal de datos igual a 0 para contar que ya se acabo el stream
     connection.write(struct.pack('<L', 0))
 
-except IOError as e:
+except IOError:
     print('Servidor del stream finalizo la conexion')
 finally:
     connection.close()

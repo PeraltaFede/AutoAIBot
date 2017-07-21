@@ -8,6 +8,7 @@ import os
 import cv2
 import numpy as np
 import pygame
+from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
 # TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD. debe funcionar SOLO recibiendo imagenes y enviando la direccion
@@ -31,76 +32,77 @@ class AutobotThread(socketserver.StreamRequestHandler):
               'para manejar. Solo se guardan los datos Arriba, Izq., Der.')
 
         try:
-            global running, saved_frame, roi, realimg
+            global running, saved_frame, roi
             saved_frame = 0
-            currentstate = 3  # 0 = izquierda ; 1 = derecha; 2 = delante ; 3 = reversa; 4 = stop
+            currentstate = 4  # 0 = izquierda ; 1 = derecha; 2 = delante ; 3 = reversa; 4 = stop
             while running:
                 cv2.imshow('Computer vision', realimg)
-                key_input = pygame.key.get_pressed()
-                # ordenes de dos teclas
-                if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
-                    print("Delante Derecha")
-                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-                    if not currentstate == 1:
-                        self.connection.send(b"DOR")
-                        currentstate = 1
-                    saved_frame += 1
+                for event in pygame.event.get():
+                    key_input = pygame.key.get_pressed()
+                    # ordenes de dos teclas
+                    if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
+                        print("Delante Derecha")
+                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                        if not currentstate == 1:
+                            self.connection.send(b"DOR")
+                            currentstate = 1
+                        saved_frame += 1
 
-                elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
-                    print("Delante Izquierda")
-                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-                    if not currentstate == 0:
-                        self.connection.send(b"DOL")
-                        currentstate = 0
-                    saved_frame += 1
+                    elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
+                        print("Delante Izquierda")
+                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                        if not currentstate == 0:
+                            self.connection.send(b"DOL")
+                            currentstate = 0
+                        saved_frame += 1
 
-                    # ordenes una tecla
-                elif key_input[pygame.K_UP]:
-                    print("Delante")
-                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
-                    if not currentstate == 2:
-                        self.connection.send(b"DOF")
-                        currentstate = 2
-                    saved_frame += 1
+                        # ordenes una tecla
+                    elif key_input[pygame.K_UP]:
+                        print("Delante")
+                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
+                        if not currentstate == 2:
+                            self.connection.send(b"DOF")
+                            currentstate = 2
+                        saved_frame += 1
 
-                elif key_input[pygame.K_RIGHT]:
-                    print("Derecha")
-                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-                    if not currentstate == 1:
-                        self.connection.send(b"DOR")
-                        currentstate = 1
-                    saved_frame += 1
+                    elif key_input[pygame.K_RIGHT]:
+                        print("Derecha")
+                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                        if not currentstate == 1:
+                            self.connection.send(b"DOR")
+                            currentstate = 1
+                        saved_frame += 1
 
-                elif key_input[pygame.K_LEFT]:
-                    print("Izquierda")
-                    cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-                    if not currentstate == 0:
-                        self.connection.send(b"DOL")
-                        currentstate = 0
-                    saved_frame += 1
+                    elif key_input[pygame.K_LEFT]:
+                        print("Izquierda")
+                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                        if not currentstate == 0:
+                            self.connection.send(b"DOL")
+                            currentstate = 0
+                        saved_frame += 1
 
-                elif key_input[pygame.K_DOWN]:
-                    if not currentstate == 3:
-                        self.connection.send(b"DOB")
-                        currentstate = 3
-                    print("Reversa")
+                    elif key_input[pygame.K_DOWN]:
+                        if not currentstate == 3:
+                            self.connection.send(b"DOB")
+                            currentstate = 3
+                        print("Reversa")
 
-                elif key_input[pygame.K_x] or key_input[pygame.K_q]:
-                    print("Detener el programa")
-                    self.connection.send(b"DOE")
-                    running = False
-                    break
+                    elif key_input[pygame.K_x] or key_input[pygame.K_q]:
+                        print("Detener el programa")
+                        self.connection.send(b"DOE")
+                        running = False
+                        break
 
-                else:
-                    if not currentstate == 4:
-                        currentstate = 4
-                        self.connection.send(b"DOS")
-                    print('Esperando ordenes')
+                    else:
+                        if not currentstate == 4:
+                            print('Esperando ordenes')
+                            currentstate = 4
+                            self.connection.send(b"DOS")
 
             pygame.quit()
             cv2.destroyAllWindows()
         finally:
-            self.finish()
+            print('Server finalizado en AutobotDriver')
 
 
 class VideoThread(socketserver.StreamRequestHandler):
@@ -140,7 +142,7 @@ class VideoThread(socketserver.StreamRequestHandler):
                 # cv2.imshow('Computer Vision', realimg)
                 total_frame += 1
         finally:
-            self.finish()
+            print('Server finalizado en VideoStreaming')
 
 
 class ThreadServer(object):
@@ -153,14 +155,25 @@ class ThreadServer(object):
         server = socketserver.TCPServer((host, port), VideoThread)
         server.serve_forever()
 
+    e1 = cv2.getTickCount()
     video_thread = threading.Thread(target=server_thread2, args=('192.168.0.13', 8000))
     video_thread.start()
     print("Video thread started")
     autobot_thread = threading.Thread(target=server_thread, args=('192.168.0.13', 8001))
     autobot_thread.start()
     print("Autobot thread started")
-    autobot_thread.join()
     video_thread.join()
+    autobot_thread.join()
+    e2 = cv2.getTickCount()
+    # calcular el total de streaming
+    time0 = (e2 - e1) / cv2.getTickFrequency()
+    print("Duracion del streaming:", time0)
+    print('Total cuadros           : ', total_frame)
+    print('Total cuadros guardados : ', saved_frame)
+    print('Total cuadros desechados: ', total_frame - saved_frame)
+    os.system('pause')
+    os.system('exit')
+
 
 if __name__ == '__main__':
 
@@ -170,16 +183,5 @@ if __name__ == '__main__':
     roi = None
     realimg = None
     global running, saved_frame, total_frame, roi, realimg
-
-    e1 = cv2.getTickCount()
     # Start new Threads
     ThreadServer()
-
-    e2 = cv2.getTickCount()
-    # calcular el total de streaming
-    time0 = (e2 - e1) / cv2.getTickFrequency()
-    print("Duracion del streaming:", time0)
-    print('Total cuadros           : ', total_frame)
-    print('Total cuadros guardados : ', saved_frame)
-    print('Total cuadros desechados: ', total_frame - saved_frame)
-    os.system('pause')

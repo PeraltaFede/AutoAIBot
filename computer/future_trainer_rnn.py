@@ -1,6 +1,9 @@
 import cv2
 import math
+import numpy as np
+import os
 import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
 # TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD
@@ -10,26 +13,31 @@ try:
 except ImportError:
     pass
 
-
-class ImageHandler(object):
-    def __init__(self):
-        # hacer una fila con los nombres de imagenes incluyendo todas las imagenes de un directorio
-        self.filename_queue = tf.train.string_input_producer(
-            tf.train.match_filenames_once("./training_images/*.jpg"), shuffle=True)
-
-        # Leer toda la imagen jpg en este caso de la dimension establecida en el agent
-        self.image_reader = tf.WholeFileReader()
-
-    def getafile(self):
-        return self.image_reader.read(self.filename_queue)
-
 print('Cargando datos para entrenamiento...')
 e0 = cv2.getTickCount()
 
-# input X: 320x120 imagenes en escala a grises, ke = the first dimension (None) will index the images in the mini-batch
-X = tf.placeholder(tf.float32, [None, 320, 120, 1])
+# Carga de thread para imagenes
+
+# De este directorio se debe quitar el bit nro 20 + nombre hasta el valor del label
+all_img_dir = tf.train.match_filenames_once(".\\training_images\\*.jpg")
+
+# Hacer una fila de los archivos a abrir
+filename_queue = tf.train.string_input_producer(all_img_dir, shuffle=True)
+
+# imagereader es un lector que lee un archivo completo a la vez
+image_reader = tf.WholeFileReader()
+# leyendo un archivo se obtienen los datos de nombre y datos de la img
+name_file, image_file = image_reader.read(filename_queue)
+
+# Decodificar las imagenes a tensores
+image = tf.image.decode_jpeg(image_file)
+
+# Creacion del modelo y el training method etc
+
+# input X: 320x120 imagenes en [1] escala a grises
+X = tf.placeholder(tf.float32, [1, 120, 320, 3])
 # ground truth se pone aca
-Y_ = tf.placeholder(tf.float32, [None, 3])
+Y_ = tf.placeholder(tf.float32, [1, 3])
 # tasa de aprendizaje
 lr = tf.placeholder(tf.float32)
 # Probabilidad de dejar un nodo funcionando = 1.0 para los examenes (no dropout) y 0.75 durante aprendizaje
@@ -43,7 +51,7 @@ N = 200  # dimension de la capa totalmente conectada
 
 # WX = variable hecha de una matriz de 6,6,1,XX dimesion y cada valor iniciado en random de 0 a 1 (truncated)
 # BX = variable hecha de una matriz de dimension K con valor constante de 0.1
-W1 = tf.Variable(tf.truncated_normal([6, 6, 1, K], stddev=0.1))  # 6x6 patch, 1 canal del anterior, K canales de salida
+W1 = tf.Variable(tf.truncated_normal([6, 6, 3, K], stddev=0.1))  # 6x6 patch, 1 canal del anterior, K canales de salida
 B1 = tf.Variable(tf.constant(0.1, tf.float32, [K]))
 W2 = tf.Variable(tf.truncated_normal([5, 5, K, L], stddev=0.1))
 B2 = tf.Variable(tf.constant(0.1, tf.float32, [L]))
@@ -89,60 +97,63 @@ train_step = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
 t0 = (cv2.getTickCount() - e0)/cv2.getTickFrequency()
 print('Carga de datos correcta en tiempo ', t0)
 # iniciar
-print('Iniciando la sesion ', t0)
-init = tf.global_variables_initializer()
-sess = tf.Session()
-sess.run(init)
-
-
-def training_step(i, update_test_data, update_train_data):
-
-    # Leer un archivo completo de la fila
-    label_name, image_file = imghd.getafile()
-
-    # Decodificar una imagen JPG a una imagen que se pueda usar en tensorflow
-    image = tf.image.decode_jpeg(image_file)
-    label = tf.zeros(3, tf.float32)  # todo: elegir el nro de posicion de label real
-    print(label_name)
-    label[label_name[5]] = 1
-
-    # learning rate decay
-    max_learning_rate = 0.003
-    min_learning_rate = 0.0001
-    decay_speed = 5000.0
-    learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i/decay_speed)
-
-    # compute training values for visualisation
-    if update_train_data:
-        a, c, im, w, b = sess.run(train_step, {X: image, Y_: label, pkeep: 1.0})
-        print("Accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
-
-    # compute test values for visualisation
-    if update_test_data:
-        print("no data for testing")
-        # a, c, im = sess.run([accuracy, cross_entropy, It], {X: mnist.test.images, Y_: mnist.test.labels, pkeep:
-        # 1.0})
-        # print(str(i) + ": ********* epoch " + str(i*100//mnist.train.images.shape[0]+1) + " ********* test
-        # accuracy:" + str(a) + " test loss: " + str(c))
-        # the backpropagation training step"""
-    sess.run(train_step, {X: image, Y_: label, lr: learning_rate, pkeep: 0.75})
-
-
+print('Iniciando la sesion ')
 # tiempo de inicio
 e1 = cv2.getTickCount()
-imghd = ImageHandler()
-coord = tf.train.Coordinator()
-threads = tf.train.start_queue_runners(coord=coord)
 
-try:
-    for j in range(10000 + 1):
-        training_step(j, j % 100 == 0, j % 20 == 0)
-finally:
+# Inicializar tf
+init = (tf.global_variables_initializer(), tf.local_variables_initializer())
+
+# Comenzar una nueva sesion.
+with tf.Session() as sess:
+    sess.run(init)
+
+    # coordinador para iniciar un threading de todos los jpg
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(coord=coord)
+
+    for i in range(sess.run(filename_queue.size())):
+        # la totalidad de imagenes corre 4 veces y aqui se hace el training
+        name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
+        y_ = np.zeros([None, 3])
+        y_[int(name_tensor)] = 1
+        image_tensor = sess.run([image])
+        # Decodificar una imagen JPG a una imagen que se pueda usar en tensorflow
+
+        # learning rate decay
+        max_learning_rate = 0.003
+        min_learning_rate = 0.0001
+        decay_speed = 5000.0
+        learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i / decay_speed)
+
+        # compute training values for visualisation
+        if i % 4 == 0:
+            a, c, im, w, b = sess.run(train_step,
+                                      {X: image_tensor,
+                                       Y_: y_,
+                                       pkeep: 1.0})
+            print("Accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
+
+        # compute test values for visualisation
+        """
+        if update_test_data:
+            print("no data for testing")
+            # a, c, im = sess.run([accuracy, cross_entropy, It], {X: mnist.test.images, Y_: mnist.test.labels, pkeep:
+            # 1.0})
+            # print(str(i) + ": ********* epoch " + str(i*100//mnist.train.images.shape[0]+1) + " ********* test
+            # accuracy:" + str(a) + " test loss: " + str(c))
+            # the backpropagation training step
+        """
+        sess.run(train_step, {X: image_tensor, Y_: y_, lr: learning_rate, pkeep: 0.75})
+
+    # al terminar se pide unir los threads y finalizar
     coord.request_stop()
     coord.join(threads)
+
     saver = tf.train.Saver()
-    save_path = saver.save(sess, "/model.ckpt")
+    save_path = saver.save(sess, "/trained_model/model.ckpt")
     print("Model saved in file: %s" % save_path)
     t0 = (cv2.getTickCount() - e1) / cv2.getTickFrequency()
     print("Tiempo de entrenamiento: ", t0)
-    sess.close()
+
+
