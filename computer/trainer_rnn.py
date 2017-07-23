@@ -29,70 +29,71 @@ image_reader = tf.WholeFileReader()
 # leyendo un archivo se obtienen los datos de nombre y datos de la img
 name_file, image_file = image_reader.read(filename_queue)
 
-# Decodificar las imagenes a tensores
-image = tf.image.decode_jpeg(image_file)
+# Decodificar las imagenes a tensores todo: remove channels
+image = tf.image.decode_jpeg(image_file, channels=1)
 
-# Creacion del modelo y el training method etc
-
-# input X: 320x120 imagenes en [1] escala a grises
-X = tf.placeholder(tf.float32, [1, 120, 320, 3])
-# ground truth se pone aca
+# input X: 28x28 grayscale images, the first dimension (None) will index the images in the mini-batch
+X = tf.placeholder(tf.float32, [1, 120, 320, 1])
+# correct answers will go here
 Y_ = tf.placeholder(tf.float32, [1, 3])
-# tasa de aprendizaje
+# variable learning rate
 lr = tf.placeholder(tf.float32)
-# Probabilidad de dejar un nodo funcionando = 1.0 para los examenes (no dropout) y 0.75 durante aprendizaje
+# Probability of keeping a node during dropout = 1.0 at test time (no dropout) and 0.75 at training time
 pkeep = tf.placeholder(tf.float32)
 
-# tres capas convolucionales con sus canales totales, y una capa totalmente conectada
-K = 6  # profundidad de la primera capa
-L = 12  # profundidad de la segunda capa
-M = 24  # profundidad de la tercera capa
-N = 200  # dimension de la capa totalmente conectada
+# three convolutional layers with their channel counts, and a
+# fully connected layer (the last layer has 3 softmax neurons)
+K = 6  # first convolutional layer output depth
+L = 12  # second convolutional layer output depth
+M = 24  # third convolutional layer
+N = 200  # fully connected layer
 
-# WX = variable hecha de una matriz de 6,6,1,XX dimesion y cada valor iniciado en random de 0 a 1 (truncated)
-# BX = variable hecha de una matriz de dimension K con valor constante de 0.1
-W1 = tf.Variable(tf.truncated_normal([6, 6, 3, K], stddev=0.1))  # 6x6 patch, 1 canal del anterior, K canales de salida
+W1 = tf.Variable(tf.truncated_normal([6, 6, 1, K], stddev=0.1))  # 6x6 patch, 1 input channel, K output channels
 B1 = tf.Variable(tf.constant(0.1, tf.float32, [K]))
 W2 = tf.Variable(tf.truncated_normal([5, 5, K, L], stddev=0.1))
 B2 = tf.Variable(tf.constant(0.1, tf.float32, [L]))
 W3 = tf.Variable(tf.truncated_normal([4, 4, L, M], stddev=0.1))
 B3 = tf.Variable(tf.constant(0.1, tf.float32, [M]))
 
-# WX = variable de matriz X Y truncated
-W4 = tf.Variable(tf.truncated_normal([7 * 7 * M, N], stddev=0.1))
+W4 = tf.Variable(tf.truncated_normal([15 * 40 * M, N], stddev=0.1))
 B4 = tf.Variable(tf.constant(0.1, tf.float32, [N]))
 W5 = tf.Variable(tf.truncated_normal([N, 3], stddev=0.1))
 B5 = tf.Variable(tf.constant(0.1, tf.float32, [3]))
 
-# El modelo
-stride = 1  # salida de la misma dimension
+# The model
+stride = 1  # output is 120x320
 Y1 = tf.nn.relu(tf.nn.conv2d(X, W1, strides=[1, stride, stride, 1], padding='SAME') + B1)
-stride = 2  # salida de la dimension/2
+stride = 2  # output is 60x160
 Y2 = tf.nn.relu(tf.nn.conv2d(Y1, W2, strides=[1, stride, stride, 1], padding='SAME') + B2)
-stride = 2  # salida de la dimension anterior/2
+stride = 4  # output is 15x40
 Y3 = tf.nn.relu(tf.nn.conv2d(Y2, W3, strides=[1, stride, stride, 1], padding='SAME') + B3)
 
-# reformateo de la salida de la 3ra convolucion para la ultima capa
-YY = tf.reshape(Y3, shape=[-1, 7 * 7 * M])
+# reshape the output from the third convolution for the fully connected layer
+YY = tf.reshape(Y3, shape=[-1, 15 * 40 * M])
 
-# ultima capa con activacion ReLU, y aplicando dropouts para evitar overfittings
 Y4 = tf.nn.relu(tf.matmul(YY, W4) + B4)
 YY4 = tf.nn.dropout(Y4, pkeep)
 Ylogits = tf.matmul(YY4, W5) + B5
-# salida ultima
 Y = tf.nn.softmax(Ylogits)
 
-# funcion de perdida cross-entropy (= -sum(Y_i * log(Yi)) ), normalizado
-# TensorFlow provee el softmax_cross_entropy_with_logits para evitar problemas numericos de estabilidad con log(0)
-
+# cross-entropy loss function (= -sum(Y_i * log(Yi)) ), normalised for batches of one image
+# TensorFlow provides the softmax_cross_entropy_with_logits function to avoid numerical stability
+# problems with log(0) which is NaN
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=Ylogits, labels=Y_)
-cross_entropy = tf.reduce_mean(cross_entropy)  # una sola imagen a la vez sino multiplicar por el batch al final *100
+cross_entropy = tf.reduce_mean(cross_entropy)
 
-# exactitud del modelo entrado, entre 0 (malo) y 1 (lo mejor)
+# accuracy of the trained model, between 0 (worst) and 1 (best)
 correct_prediction = tf.equal(tf.argmax(Y, 1), tf.argmax(Y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+# matplotlib visualisation
+allweights = tf.concat([tf.reshape(W1, [-1]), tf.reshape(W2, [-1]), tf.reshape(W3, [-1]),
+                        tf.reshape(W4, [-1]), tf.reshape(W5, [-1])], 0)
+allbiases = tf.concat([tf.reshape(B1, [-1]), tf.reshape(B2, [-1]), tf.reshape(B3, [-1]),
+                       tf.reshape(B4, [-1]), tf.reshape(B5, [-1])], 0)
 
-# paso de entrenamiento, la tasa de aprendizaje es un estado p completar
+# I = tensorflowvisu.tf_format_mnist_images(X, Y, Y_)
+
+# training step, the learning rate is a placeholder
 train_step = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
 t0 = (cv2.getTickCount() - e0)/cv2.getTickFrequency()
 print('Carga de datos correcta en tiempo ', t0)
@@ -107,7 +108,6 @@ init = (tf.global_variables_initializer(), tf.local_variables_initializer())
 # Comenzar una nueva sesion.
 with tf.Session() as sess:
     sess.run(init)
-
     # coordinador para iniciar un threading de todos los jpg
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
@@ -115,35 +115,18 @@ with tf.Session() as sess:
     for i in range(sess.run(filename_queue.size())):
         # la totalidad de imagenes corre 4 veces y aqui se hace el training
         name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
-        y_ = np.zeros([None, 3])
-        y_[int(name_tensor)] = 1
+        y_ = np.zeros([1, 3])
+        y_[0, int(name_tensor)] = 1
         image_tensor = sess.run([image])
-        # Decodificar una imagen JPG a una imagen que se pueda usar en tensorflow
-
         # learning rate decay
         max_learning_rate = 0.003
         min_learning_rate = 0.0001
-        decay_speed = 5000.0
-        learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i / decay_speed)
-
-        # compute training values for visualisation
-        if i % 4 == 0:
-            a, c, im, w, b = sess.run(train_step,
-                                      {X: image_tensor,
-                                       Y_: y_,
-                                       pkeep: 1.0})
-            print("Accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
-
-        # compute test values for visualisation
-        """
-        if update_test_data:
-            print("no data for testing")
-            # a, c, im = sess.run([accuracy, cross_entropy, It], {X: mnist.test.images, Y_: mnist.test.labels, pkeep:
-            # 1.0})
-            # print(str(i) + ": ********* epoch " + str(i*100//mnist.train.images.shape[0]+1) + " ********* test
-            # accuracy:" + str(a) + " test loss: " + str(c))
-            # the backpropagation training step
-        """
+        decay_speed = 2000.0
+        learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i/decay_speed)
+        if i % 4 == 0 and i != 0:
+            a, c = sess.run([accuracy, cross_entropy], {X: image_tensor, Y_: y_, pkeep: 1.0})
+            print(str(i) + ": accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
+        # the backpropagation training step
         sess.run(train_step, {X: image_tensor, Y_: y_, lr: learning_rate, pkeep: 0.75})
 
     # al terminar se pide unir los threads y finalizar
@@ -151,9 +134,7 @@ with tf.Session() as sess:
     coord.join(threads)
 
     saver = tf.train.Saver()
-    save_path = saver.save(sess, "/trained_model/model.ckpt")
+    save_path = saver.save(sess, "./trained_model/model.ckpt")
     print("Model saved in file: %s" % save_path)
     t0 = (cv2.getTickCount() - e1) / cv2.getTickFrequency()
     print("Tiempo de entrenamiento: ", t0)
-
-

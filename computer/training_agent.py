@@ -8,7 +8,6 @@ import os
 import cv2
 import numpy as np
 import pygame
-from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
 # TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD. debe funcionar SOLO recibiendo imagenes y enviando la direccion
@@ -22,22 +21,25 @@ except ImportError:
 class AutobotThread(socketserver.StreamRequestHandler):
 
     def handle(self):
-
+        myfont = pygame.font.SysFont("monospace", 15)
         pygame.init()
-        pygame.display.set_mode((20, 20), 0, 24)
-        pygame.display.set_caption("Teclado")
+        screen = pygame.display.set_mode((200, 200), 0, 24)
+        screen.set_caption("Teclado")
+        label = myfont.render("Detenido", 1, (255, 255, 0))
+        screen.blit(label, (100, 100))
 
         print("Conexion establecida en Autobot: ", self.client_address)
         print('Empieza a coleccionar datos manejando.\nUtiliza las flechas '
               'para manejar. Solo se guardan los datos Arriba, Izq., Der.')
 
         try:
-            global running, saved_frame, roi
+            global running, saved_frame, roi, newimg
             saved_frame = 0
             currentstate = 4  # 0 = izquierda ; 1 = derecha; 2 = delante ; 3 = reversa; 4 = stop
             while running:
-                cv2.imshow('Computer vision', realimg)
-                for event in pygame.event.get():
+                if newimg:
+                    newimg = False
+                    cv2.imshow('Computer vision', realimg)
                     key_input = pygame.key.get_pressed()
                     # ordenes de dos teclas
                     if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
@@ -46,6 +48,8 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 1:
                             self.connection.send(b"DOR")
                             currentstate = 1
+                            label = myfont.render("Delante Derecha", 1, (255, 255, 0))
+                            screen.blit(label, (100, 100))
                         saved_frame += 1
 
                     elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
@@ -54,6 +58,8 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 0:
                             self.connection.send(b"DOL")
                             currentstate = 0
+                            label = myfont.render("Delante Izquierda", 1, (255, 255, 0))
+                            screen.blit(label, (100, 100))
                         saved_frame += 1
 
                         # ordenes una tecla
@@ -63,6 +69,8 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 2:
                             self.connection.send(b"DOF")
                             currentstate = 2
+                            label = myfont.render("Delante", 1, (255, 255, 0))
+                            screen.blit(label, (100, 100))
                         saved_frame += 1
 
                     elif key_input[pygame.K_RIGHT]:
@@ -71,6 +79,8 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 1:
                             self.connection.send(b"DOR")
                             currentstate = 1
+                            label = myfont.render("Derecha", 1, (255, 255, 0))
+                            screen.blit(label, (100, 100))
                         saved_frame += 1
 
                     elif key_input[pygame.K_LEFT]:
@@ -79,16 +89,22 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 0:
                             self.connection.send(b"DOL")
                             currentstate = 0
+                            label = myfont.render("Izquierda", 1, (255, 255, 0))
+                            screen.blit(label, (100, 100))
                         saved_frame += 1
 
                     elif key_input[pygame.K_DOWN]:
                         if not currentstate == 3:
                             self.connection.send(b"DOB")
                             currentstate = 3
+                            label = myfont.render("Reversa", 1, (255, 255, 0))
+                            screen.blit(label, (100, 100))
                         print("Reversa")
 
                     elif key_input[pygame.K_x] or key_input[pygame.K_q]:
                         print("Detener el programa")
+                        label = myfont.render("Finalizar programa", 1, (255, 255, 0))
+                        screen.blit(label, (100, 100))
                         self.connection.send(b"DOE")
                         running = False
                         break
@@ -96,6 +112,8 @@ class AutobotThread(socketserver.StreamRequestHandler):
                     else:
                         if not currentstate == 4:
                             print('Esperando ordenes')
+                            label = myfont.render("Detenido", 1, (255, 255, 0))
+                            screen.blit(label, (100, 100))
                             currentstate = 4
                             self.connection.send(b"DOS")
 
@@ -110,7 +128,7 @@ class VideoThread(socketserver.StreamRequestHandler):
     name = "Video-Thread"
 
     def handle(self):
-        global running, roi, total_frame, realimg
+        global running, roi, total_frame, realimg, newimg
         total_frame = 0
         print("Conexion establecida video: ", self.client_address)
         running = True
@@ -137,9 +155,7 @@ class VideoThread(socketserver.StreamRequestHandler):
                 # region es Y, X
                 roi = image[120:240, :]
                 realimg = cv2.rectangle(realimg, (0, 120), (318, 238), (30, 230, 30), 1)
-                # mostrar la imagen
-                # cv2.imwrite('driving_images/frame{:>05}.jpg'.format(total_frame), realimg)
-                # cv2.imshow('Computer Vision', realimg)
+                newimg = True
                 total_frame += 1
         finally:
             print('Server finalizado en VideoStreaming')
@@ -172,7 +188,6 @@ class ThreadServer(object):
     print('Total cuadros guardados : ', saved_frame)
     print('Total cuadros desechados: ', total_frame - saved_frame)
     os.system('pause')
-    os.system('exit')
 
 
 if __name__ == '__main__':
@@ -182,6 +197,7 @@ if __name__ == '__main__':
     total_frame = 0
     roi = None
     realimg = None
-    global running, saved_frame, total_frame, roi, realimg
+    newimg = False
+    # global running, saved_frame, total_frame, roi, realimg, newimg
     # Start new Threads
     ThreadServer()
