@@ -14,7 +14,7 @@ class Autobot(object):
 
     def foward(self, speed=1):
         self.left_motor.forward(speed)
-        self.right_motor.forward(speed)
+        self.right_motor.backward(speed)
 
     def backwards(self, speed=1):
         self.left_motor.backward(speed)
