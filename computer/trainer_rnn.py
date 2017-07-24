@@ -19,18 +19,23 @@ e0 = cv2.getTickCount()
 # Carga de thread para imagenes
 
 # De este directorio se debe quitar el bit nro 20 + nombre hasta el valor del label
-all_img_dir = tf.train.match_filenames_once(".\\training_images\\*.jpg")
+train_img_dir = tf.train.match_filenames_once(".\\training_images\\*.jpg")
+test_img_dir = tf.train.match_filenames_once(".\\test_images\\*.jpg")
 
 # Hacer una fila de los archivos a abrir
-filename_queue = tf.train.string_input_producer(all_img_dir, shuffle=True)
+filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True)
+test_filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True)
 
 # imagereader es un lector que lee un archivo completo a la vez
 image_reader = tf.WholeFileReader()
+test_image_reader = tf.WholeFileReader()
 # leyendo un archivo se obtienen los datos de nombre y datos de la img
 name_file, image_file = image_reader.read(filename_queue)
+test_name_file, test_image_file = test_image_reader.read(test_filename_queue)
 
 # Decodificar las imagenes a tensores todo: remove channels
 image = tf.image.decode_jpeg(image_file, channels=1)
+test_image = tf.image.decode_jpeg(test_image_file, channels=1)
 
 # input X: 28x28 grayscale images, the first dimension (None) will index the images in the mini-batch
 X = tf.placeholder(tf.float32, [1, 120, 320, 1])
@@ -111,6 +116,7 @@ with tf.Session() as sess:
     # coordinador para iniciar un threading de todos los jpg
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
+    # print(range(sess.run(filename_queue.size())))
 
     for i in range(sess.run(filename_queue.size())):
         # la totalidad de imagenes corre 4 veces y aqui se hace el training
@@ -123,9 +129,17 @@ with tf.Session() as sess:
         min_learning_rate = 0.0001
         decay_speed = 2000.0
         learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i/decay_speed)
-        if i % 4 == 0 and i != 0:
+        if i % 1 == 0 and i != 0:
             a, c = sess.run([accuracy, cross_entropy], {X: image_tensor, Y_: y_, pkeep: 1.0})
             print(str(i) + ": accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
+        if i % 4 == 0 and i != 0:
+            test_name_tensor = sess.run([test_name_file])[0].decode('utf-8')[29]
+            test_y_ = np.zeros([1, 3])
+            test_y_[0, int(test_name_tensor)] = 1
+            test_image_tensor = sess.run([test_image])
+            a, c = sess.run([accuracy, cross_entropy], {X: test_image_tensor, Y_: test_y_, pkeep: 1.0})
+            print(str(i) + ": TEST: accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
+
         # the backpropagation training step
         sess.run(train_step, {X: image_tensor, Y_: y_, lr: learning_rate, pkeep: 0.75})
 
