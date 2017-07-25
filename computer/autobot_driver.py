@@ -69,7 +69,7 @@ class NeuralNetwork(object):
         self.sess.run(init)
         print("Modelo de red neuronal restaurado e iniciado.")
 
-    def predict(self, image=roi):
+    def predict(self, image):
         y_pred = self.sess.run(self.Y, feed_dict={self.X: image})
         print(y_pred)
 

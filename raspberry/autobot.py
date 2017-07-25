@@ -12,21 +12,21 @@ class Autobot(object):
         self.left_motor = Motor(*left)
         self.right_motor = Motor(*right)
 
-    def foward(self, speed=1):
+    def forward(self, speed=1):
         self.left_motor.forward(speed)
-        self.right_motor.backward(speed)
+        self.right_motor.forward(speed)
 
     def backwards(self, speed=1):
         self.left_motor.backward(speed)
         self.right_motor.backward(speed)
 
     def left(self, speed=1):
-        self.left_motor.stop()
+        self.left_motor.forward(speed/4)
         self.right_motor.forward(speed)
 
     def right(self, speed=1):
         self.left_motor.forward(speed)
-        self.right_motor.stop()
+        self.right_motor.forward(speed/4)
 
     def stop(self):
         self.left_motor.stop()
@@ -34,20 +34,21 @@ class Autobot(object):
 
 if __name__ == '__main__':
 
+    # TODO: Cambiar aca para mover bien
     autobot1 = Autobot(left=(27, 22), right=(10, 9))
+    autobot1.stop()
     # Se crea e inicializa un zocalo de cliente para enviar los datos
     print('Esperando conexion del autobot..')
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('192.168.0.13', 8001))
     print('Conexion del autobot establecida!')
-    autobot1.stop()
 
     try:
         driving = True
         while driving:
             received = client_socket.recv(1024).decode("utf-8")
             if received == "DOF":
-                autobot1.foward()
+                autobot1.forward()
             elif received == "DOR":
                 autobot1.right()
             elif received == "DOL":
