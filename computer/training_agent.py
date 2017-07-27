@@ -21,10 +21,9 @@ except ImportError:
 class AutobotThread(socketserver.StreamRequestHandler):
 
     def handle(self):
-        myfont = pygame.font.SysFont("monospace", 15)
         pygame.init()
+        myfont = pygame.font.SysFont("monospace", 15)
         screen = pygame.display.set_mode((200, 200), 0, 24)
-        screen.set_caption("Teclado")
         label = myfont.render("Detenido", 1, (255, 255, 0))
         screen.blit(label, (100, 100))
 
@@ -116,6 +115,9 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             screen.blit(label, (100, 100))
                             currentstate = 4
                             self.connection.send(b"DOS")
+                else:
+                    for event in pygame.event.get():
+                        key_input = pygame.key.get_pressed()
 
             pygame.quit()
             cv2.destroyAllWindows()
