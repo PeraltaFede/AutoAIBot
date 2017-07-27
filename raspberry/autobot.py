@@ -47,6 +47,7 @@ if __name__ == '__main__':
         driving = True
         while driving:
             received = client_socket.recv(1024).decode("utf-8")
+            print(received)
             if received == "DOF":
                 autobot1.forward()
             elif received == "DOR":
