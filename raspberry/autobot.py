@@ -23,10 +23,10 @@ class Autobot(object):
 
     def left(self, speed=1):
         self.left_motor.forward(speed)
-        self.right_motor.stop()
+        self.right_motor.forward(0.2)
 
     def right(self, speed=1):
-        self.left_motor.stop()
+        self.left_motor.forward(0.2)
         self.right_motor.forward(speed)
 
     def stop(self):
