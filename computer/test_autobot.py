@@ -1,6 +1,7 @@
 import pygame
 import os
 import socket
+import subprocess
 from pygame.locals import *
 
 
@@ -10,7 +11,8 @@ class ABTest(object):
 
         print("Iniciando modulo prueba de autobot")
         self.server_socket = socket.socket()
-        self.server_socket.bind(('192.168.0.13', 8001))
+        global server_ip
+        self.server_socket.bind((server_ip, 8001))
         self.server_socket.listen()
 
         print("Esperando conexion...")
@@ -96,5 +98,8 @@ class ABTest(object):
 
 # se pone asi para que el script no corra cuando sea importado
 if __name__ == '__main__':
+    server_ip = '192.168.0.13'
+    if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
+        server_ip = '192.168.43.59'
     ABTest()
     os.system("pause")

@@ -172,7 +172,9 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             screen.blit(label, (100, 100))
                             currentstate = 4
                             self.connection.send(b"DOS")
-
+                else:
+                    for _ in pygame.event.get():
+                        _ = pygame.key.get_pressed()
             pygame.quit()
             cv2.destroyAllWindows()
         finally:
@@ -227,13 +229,13 @@ class ThreadServer(object):
         server = socketserver.TCPServer((host, port), VideoThread)
         server.serve_forever()
 
-    print("iniciando esto sin que nadie le haya pedido")
+    print("Iniciando Threads")
     video_thread = threading.Thread(target=server_thread2, args=('192.168.0.13', 8000))
     video_thread.start()
-    print("Video thread started")
+    print("Video thread iniciado")
     autobot_thread = threading.Thread(target=server_thread, args=('192.168.0.13', 8001))
     autobot_thread.start()
-    print("Autobot thread started")
+    print("Autobot thread iniciado")
 
 
 if __name__ == '__main__':
@@ -248,9 +250,8 @@ if __name__ == '__main__':
     # global running, saved_frame, total_frame, roi, realimg, newimg
     # Start new Threads
     e1 = cv2.getTickCount()
-    ThreadServer()
-    ThreadServer.video_thread.join()
-    ThreadServer.autobot_thread.join()
+    while running:
+        pass
     e2 = cv2.getTickCount()
     # calcular el total de streaming
     time0 = (e2 - e1) / cv2.getTickFrequency()

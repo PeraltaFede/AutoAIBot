@@ -4,6 +4,7 @@ import threading
 # noinspection PyCompatibility
 import socketserver
 import os
+import subprocess
 
 import cv2
 import numpy as np
@@ -26,6 +27,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
         screen = pygame.display.set_mode((200, 200), 0, 24)
         label = myfont.render("Detenido", 1, (255, 255, 0))
         screen.blit(label, (100, 100))
+        screen.update()
 
         print("Conexion establecida en Autobot: ", self.client_address)
         print('Empieza a coleccionar datos manejando.\nUtiliza las flechas '
@@ -49,6 +51,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             currentstate = 1
                             label = myfont.render("Delante Derecha", 1, (255, 255, 0))
                             screen.blit(label, (100, 100))
+                            screen.update()
                         saved_frame += 1
 
                     elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
@@ -59,6 +62,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             currentstate = 0
                             label = myfont.render("Delante Izquierda", 1, (255, 255, 0))
                             screen.blit(label, (100, 100))
+                            screen.update()
                         saved_frame += 1
 
                         # ordenes una tecla
@@ -70,6 +74,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             currentstate = 2
                             label = myfont.render("Delante", 1, (255, 255, 0))
                             screen.blit(label, (100, 100))
+                            screen.update()
                         saved_frame += 1
 
                     elif key_input[pygame.K_RIGHT]:
@@ -80,6 +85,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             currentstate = 1
                             label = myfont.render("Derecha", 1, (255, 255, 0))
                             screen.blit(label, (100, 100))
+                            screen.update()
                         saved_frame += 1
 
                     elif key_input[pygame.K_LEFT]:
@@ -90,6 +96,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             currentstate = 0
                             label = myfont.render("Izquierda", 1, (255, 255, 0))
                             screen.blit(label, (100, 100))
+                            screen.update()
                         saved_frame += 1
 
                     elif key_input[pygame.K_DOWN]:
@@ -98,12 +105,14 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             currentstate = 3
                             label = myfont.render("Reversa", 1, (255, 255, 0))
                             screen.blit(label, (100, 100))
+                            screen.update()
                         print("Reversa")
 
                     elif key_input[pygame.K_x] or key_input[pygame.K_q]:
                         print("Detener el programa")
                         label = myfont.render("Finalizar programa", 1, (255, 255, 0))
                         screen.blit(label, (100, 100))
+                        screen.update()
                         self.connection.send(b"DOE")
                         running = False
                         break
@@ -113,11 +122,12 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             print('Esperando ordenes')
                             label = myfont.render("Detenido", 1, (255, 255, 0))
                             screen.blit(label, (100, 100))
+                            screen.update()
                             currentstate = 4
                             self.connection.send(b"DOS")
                 else:
-                    for event in pygame.event.get():
-                        key_input = pygame.key.get_pressed()
+                    for _ in pygame.event.get():
+                        _ = pygame.key.get_pressed()
 
             pygame.quit()
             cv2.destroyAllWindows()
@@ -173,23 +183,16 @@ class ThreadServer(object):
         server = socketserver.TCPServer((host, port), VideoThread)
         server.serve_forever()
 
-    e1 = cv2.getTickCount()
-    video_thread = threading.Thread(target=server_thread2, args=('192.168.0.13', 8000))
+    server_ip = '192.168.0.13'
+    if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
+        server_ip = '192.168.43.59'
+    print(server_ip)
+    video_thread = threading.Thread(target=server_thread2, args=(server_ip, 8000))
     video_thread.start()
     print("Video thread started")
-    autobot_thread = threading.Thread(target=server_thread, args=('192.168.0.13', 8001))
+    autobot_thread = threading.Thread(target=server_thread, args=(server_ip, 8001))
     autobot_thread.start()
     print("Autobot thread started")
-    video_thread.join()
-    autobot_thread.join()
-    e2 = cv2.getTickCount()
-    # calcular el total de streaming
-    time0 = (e2 - e1) / cv2.getTickFrequency()
-    print("Duracion del streaming:", time0)
-    print('Total cuadros           : ', total_frame)
-    print('Total cuadros guardados : ', saved_frame)
-    print('Total cuadros desechados: ', total_frame - saved_frame)
-    os.system('pause')
 
 
 if __name__ == '__main__':
@@ -200,6 +203,15 @@ if __name__ == '__main__':
     roi = None
     realimg = None
     newimg = False
-    # global running, saved_frame, total_frame, roi, realimg, newimg
-    # Start new Threads
+    e1 = cv2.getTickCount()
     ThreadServer()
+    while running:
+        pass
+    e2 = cv2.getTickCount()
+    # calcular el total de streaming
+    time0 = (e2 - e1) / cv2.getTickFrequency()
+    print("Duracion del streaming:", time0)
+    print('Total cuadros           : ', total_frame)
+    print('Total cuadros guardados : ', saved_frame)
+    print('Total cuadros desechados: ', total_frame - saved_frame)
+    os.system('pause')

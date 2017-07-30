@@ -9,10 +9,13 @@ import socket
 import struct
 import os
 import io
+import subprocess
+
 from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
 # TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
+# todo: cambiar ip si esta en otro wifi
 try:
     # noinspection PyUnresolvedReferences
     from cv2 import cv2
@@ -26,7 +29,8 @@ class CameraTest(object):
 
         self.server_socket = socket.socket()
         print("Inicializando stream...")
-        self.server_socket.bind(('192.168.0.13', 8000))
+        global server_ip
+        self.server_socket.bind((server_ip, 8000))
         self.server_socket.listen()
         print("Esperando conexion...")
         # bandera para el while
@@ -66,7 +70,10 @@ class CameraTest(object):
                 image_stream.seek(0)
 
                 jpg = image_stream.read()
-                image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+                image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+                image = cv2.rectangle(image, (0, 120), (318, 238), (30, 230, 30), 1)
+
+                # image = cv2.flip(image, -1)
 
                 # guardar la imagen
                 cv2.imwrite('streamtest_img/frame{:>05}.jpg'.format(total_frame), image)
@@ -95,4 +102,7 @@ class CameraTest(object):
             os.system("pause")
 
 if __name__ == '__main__':
+    server_ip = '192.168.0.13'
+    if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
+        server_ip = '192.168.43.59'
     CameraTest()

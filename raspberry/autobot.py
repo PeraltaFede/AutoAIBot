@@ -4,6 +4,7 @@ y se leen los datos entrantes para mover el auto
 IMPORTANTE: iniciar esto segundo para asegurar que el servidor esta escuchando
 """
 import socket
+import subprocess
 from gpiozero import Motor
 
 
@@ -40,7 +41,10 @@ if __name__ == '__main__':
     # Se crea e inicializa un zocalo de cliente para enviar los datos
     print('Esperando conexion del autobot..')
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('192.168.0.13', 8001))
+    server_ip = '192.168.0.13'
+    if b"Fede Android" in subprocess.check_output("sudo iwlist wlan0 scan"):
+        server_ip = '192.168.43.59'
+    client_socket.connect((server_ip, 8001))
     print('Conexion del autobot establecida!')
 
     try:
