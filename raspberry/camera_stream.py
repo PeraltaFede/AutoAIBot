@@ -15,7 +15,7 @@ import subprocess
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print('Esperando conexion de video..')
 server_ip = '192.168.0.13'
-if b"Fede Android" in subprocess.check_output("sudo iwlist wlan0 scan"):
+if b"Fede Android" in subprocess.check_output(["iwlist", "wlan0", "scan"]):
     server_ip = '192.168.43.59'
 client_socket.connect((server_ip, 8000))
 print('Conexion establecida')

@@ -42,7 +42,7 @@ if __name__ == '__main__':
     print('Esperando conexion del autobot..')
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_ip = '192.168.0.13'
-    if b"Fede Android" in subprocess.check_output("sudo iwlist wlan0 scan"):
+    if b"Fede Android" in subprocess.check_output(["iwlist", "wlan0", "scan"]):
         server_ip = '192.168.43.59'
     client_socket.connect((server_ip, 8001))
     print('Conexion del autobot establecida!')
