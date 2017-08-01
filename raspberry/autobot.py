@@ -53,15 +53,18 @@ if __name__ == '__main__':
             received = client_socket.recv(1024).decode("utf-8")
             print(received)
             if received == "DOF":
+                autobot1.stop()
                 autobot1.forward()
             elif received == "DOR":
+                autobot1.stop()
                 autobot1.right()
             elif received == "DOL":
+                autobot1.stop()
                 autobot1.left()
             elif received == "DOB":
-                autobot1.backwards()
-            elif received == "DOS":
                 autobot1.stop()
+                autobot1.backwards()
+#            elif received == "DOS":
             elif received == "DOE":
                 driving = False
                 autobot1.stop()
