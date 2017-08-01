@@ -13,7 +13,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
-# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD. debe funcionar SOLO recibiendo imagenes y enviando la direccion
+# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
 try:
     # noinspection PyUnresolvedReferences
     from cv2 import cv2

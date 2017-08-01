@@ -15,7 +15,6 @@ from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
 # TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
-# todo: cambiar ip si esta en otro wifi
 try:
     # noinspection PyUnresolvedReferences
     from cv2 import cv2

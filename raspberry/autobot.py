@@ -35,7 +35,6 @@ class Autobot(object):
 
 if __name__ == '__main__':
 
-    # TODO: Cambiar aca para mover bien
     autobot1 = Autobot(left=(22, 27), right=(9, 10))
     autobot1.stop()
     # Se crea e inicializa un zocalo de cliente para enviar los datos

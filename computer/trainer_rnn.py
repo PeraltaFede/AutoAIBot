@@ -33,7 +33,7 @@ test_image_reader = tf.WholeFileReader()
 name_file, image_file = image_reader.read(filename_queue)
 test_name_file, test_image_file = test_image_reader.read(test_filename_queue)
 
-# Decodificar las imagenes a tensores todo: remove channels
+# Decodificar las imagenes a tensores
 image = tf.image.decode_jpeg(image_file, channels=1)
 test_image = tf.image.decode_jpeg(test_image_file, channels=1)
 
