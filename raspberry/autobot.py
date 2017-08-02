@@ -35,7 +35,7 @@ class Autobot(object):
 
 if __name__ == '__main__':
 
-    autobot1 = Autobot(left=(22, 27), right=(9, 10))
+    autobot1 = Autobot(right=(22, 27), left=(9, 10))
     autobot1.stop()
     # Se crea e inicializa un zocalo de cliente para enviar los datos
     print('Esperando conexion del autobot..')
