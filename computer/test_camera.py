@@ -84,7 +84,7 @@ class CameraTest(object):
                 cv2.imshow('Computer Vision', image)
 
                 total_frame += 1
-                screen.blit(myfont.render(("Total Frames: ", total_frame), 1, (255, 255, 0), (0, 0, 0)), (60, 0))
+                screen.blit(myfont.render(("Total Frames: " + str(total_frame)), 1, (255, 255, 0), (0, 0, 0)), (60, 0))
                 for event in pygame.event.get():
                     if event.type == KEYDOWN:
                         key_input = pygame.key.get_pressed()
@@ -92,6 +92,7 @@ class CameraTest(object):
                             print("Deteniendo el stream")
                             self.corriendo_programa = False
                             break
+
             e2 = cv2.getTickCount()
             # calcular el total de streaming
             time0 = (e2 - e1) / cv2.getTickFrequency()

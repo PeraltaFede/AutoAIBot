@@ -28,7 +28,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
         myfont = pygame.font.SysFont("monospace", 15)
         screen = pygame.display.set_mode((200, 200), 0, 24)
         label = myfont.render("Detenido", 1, (255, 255, 0))
-        screen.blit(label, (60, 0))
+        screen.blit(label, (0, 60))
         pygame.display.flip()
 
         print("Conexion establecida en Autobot: ", self.client_address)
@@ -118,9 +118,11 @@ class AutobotThread(socketserver.StreamRequestHandler):
                             label = myfont.render("Detenido", 1, (255, 255, 0), (0, 0, 0))
                             currentstate = 4
                             self.connection.send(b"DOS")
-                    screen.blit(label, (60, 0))
-                    screen.blit(myfont.render(("Total Frames: ", total_frame), 1, (255, 255, 0), (0, 0, 0)), (0, 0))
-                    screen.blit(myfont.render(("Saved Frames: ", saved_frame), 1, (255, 255, 0), (0, 0, 0)), (30, 0))
+                    screen.blit(label, (0, 60))
+                    screen.blit(myfont.render(("Total Frames: " + str(total_frame)),
+                                              1, (255, 255, 0), (0, 0, 0)), (0, 0))
+                    screen.blit(myfont.render(("Saved Frames: " + str(saved_frame)),
+                                              1, (255, 255, 0), (0, 0, 0)), (0, 30))
                     pygame.display.flip()
                 else:
                     for _ in pygame.event.get():
