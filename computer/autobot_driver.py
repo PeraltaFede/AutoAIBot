@@ -95,9 +95,10 @@ class AutobotThread(socketserver.StreamRequestHandler):
               'q, x para finalizar el programa.')
 
         try:
-            global running, newimg, next_direction
+            global running, newimg, next_direction, roi
             while running:
                 if newimg:
+                    NeuralNetwork.predict(neuralnet, image=roi)
                     newimg = False
                     cv2.imshow('Computer vision', realimg)
                     # ordenes de dos teclas
@@ -156,15 +157,15 @@ class VideoThread(socketserver.StreamRequestHandler):
             while running:
                 # Read the length of the image as a 32-bit unsigned int. If the
                 # length is zero, quit the loop
-                # image_len = struct.unpack('<L', self.rfile.read(struct.calcsize('<L')))[0]
-                # if not image_len:
-                #     print('Finalizado por Cliente')
-                #    break
+                image_len = struct.unpack('<L', self.rfile.read(struct.calcsize('<L')))[0]
+                if not image_len:
+                    print('Finalizado por Cliente')
+                    break
                 # Construct a stream to hold the image data and read the image
                 # data from the connection
 
                 image_stream = io.BytesIO()
-                image_stream.write(self.rfile.read(1024))
+                image_stream.write(self.rfile.read(image_len))
 
                 image_stream.seek(0)
                 jpg = image_stream.read()
@@ -173,7 +174,6 @@ class VideoThread(socketserver.StreamRequestHandler):
                 # region es Y, X
                 roi = image[120:240, :]
                 realimg = cv2.rectangle(realimg, (0, 120), (318, 238), (30, 230, 30), 1)
-                NeuralNetwork.predict(neuralnet, image=roi)
                 newimg = True
         finally:
             print('Server finalizado en VideoStreaming')

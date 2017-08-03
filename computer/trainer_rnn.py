@@ -23,8 +23,8 @@ train_img_dir = tf.train.match_filenames_once(".\\training_images\\*.jpg")
 test_img_dir = tf.train.match_filenames_once(".\\test_images\\*.jpg")
 
 # Hacer una fila de los archivos a abrir
-filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True, capacity=5000)
-test_filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True)
+filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True, capacity=3000)
+test_filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True, capacity=300)
 
 # imagereader es un lector que lee un archivo completo a la vez
 image_reader = tf.WholeFileReader()
@@ -116,7 +116,6 @@ with tf.Session() as sess:
     # coordinador para iniciar un threading de todos los jpg
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
-    print('Total de imagenes: ', range(sess.run(filename_queue.size())))
     for i in range(sess.run(filename_queue.size())):
         # la totalidad de imagenes corre 4 veces y aqui se hace el training
         name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
@@ -124,14 +123,14 @@ with tf.Session() as sess:
         y_[0, int(name_tensor)] = 1
         image_tensor = sess.run([image])
         # learning rate decay
-        max_learning_rate = 0.03
+        max_learning_rate = 0.05
         min_learning_rate = 0.001
-        decay_speed = 2000.0
+        decay_speed = 1000.0
         learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i/decay_speed)
         if i % 1 == 0 and i != 0:
             a, c = sess.run([accuracy, cross_entropy], {X: image_tensor, Y_: y_, pkeep: 1.0})
             print(str(i) + ": TRAIN: accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
-        if i % 4 == 0 and i != 0:
+        if i % 8 == 0 and i != 0:
             test_name_tensor = sess.run([test_name_file])[0].decode('utf-8')[29]
             test_y_ = np.zeros([1, 3])
             test_y_[0, int(test_name_tensor)] = 1
