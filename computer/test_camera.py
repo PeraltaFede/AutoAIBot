@@ -41,8 +41,6 @@ class CameraTest(object):
         print("Conexion establecida!")
 
         pygame.init()
-        pygame.display.set_mode((50, 50), 0, 24)
-        pygame.display.set_caption("Presione x o q para finalizar")
         self.open_stream()
 
     def open_stream(self):
@@ -54,6 +52,12 @@ class CameraTest(object):
 
         # obtener las imagenes del stream una por una
         try:
+            myfont = pygame.font.SysFont("monospace", 15)
+            screen = pygame.display.set_mode((200, 200), 0, 24)
+            label = myfont.render("Presione q o x para finalizar\n el programa.", 1, (255, 255, 0))
+            screen.blit(label, (0, 0))
+            pygame.display.flip()
+
             while self.corriendo_programa:
                 # Read the length of the image as a 32-bit unsigned int. If the
                 # length is zero, quit the loop
@@ -80,6 +84,7 @@ class CameraTest(object):
                 cv2.imshow('Computer Vision', image)
 
                 total_frame += 1
+                screen.blit(myfont.render(("Total Frames: ", total_frame), 1, (255, 255, 0), (0, 0, 0)), (60, 0))
                 for event in pygame.event.get():
                     if event.type == KEYDOWN:
                         key_input = pygame.key.get_pressed()

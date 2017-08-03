@@ -5,10 +5,12 @@ import threading
 import socketserver
 import os
 import subprocess
+import random
 
 import cv2
 import numpy as np
 import pygame
+
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
 # TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD. debe funcionar SOLO recibiendo imagenes y enviando la direccion
@@ -26,7 +28,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
         myfont = pygame.font.SysFont("monospace", 15)
         screen = pygame.display.set_mode((200, 200), 0, 24)
         label = myfont.render("Detenido", 1, (255, 255, 0))
-        screen.blit(label, (0, 0))
+        screen.blit(label, (60, 0))
         pygame.display.flip()
 
         print("Conexion establecida en Autobot: ", self.client_address)
@@ -44,95 +46,82 @@ class AutobotThread(socketserver.StreamRequestHandler):
                     key_input = pygame.key.get_pressed()
                     # ordenes de dos teclas
                     if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
-                        print("Delante Derecha")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                        if random.randint(0, 99) > 25:
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                        else:
+                            cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
                         if not currentstate == 1:
                             self.connection.send(b"DOR")
                             currentstate = 1
-                            label = myfont.render("Delante Derecha", 1, (255, 255, 0))
-                            screen.fill((0, 0, 0))
-                            screen.blit(label, (0, 0))
-                            pygame.display.flip()
+                            label = myfont.render("Delante Derecha", 1, (255, 255, 0), (0, 0, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
-                        print("Delante Izquierda")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                        if random.randint(0, 99) > 25:
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                        else:
+                            cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
                         if not currentstate == 0:
                             self.connection.send(b"DOL")
                             currentstate = 0
-                            label = myfont.render("Delante Izquierda", 1, (255, 255, 0))
-                            screen.fill((0, 0, 0))
-                            screen.blit(label, (0, 0))
-                            pygame.display.flip()
+                            label = myfont.render("Delante Izquierda", 1, (255, 255, 0), (0, 0, 0))
                         saved_frame += 1
 
                         # ordenes una tecla
                     elif key_input[pygame.K_UP]:
-                        print("Delante")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
+                        if random.randint(0, 99) > 25:
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
+                        else:
+                            cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
                         if not currentstate == 2:
                             self.connection.send(b"DOF")
                             currentstate = 2
-                            label = myfont.render("Delante", 1, (255, 255, 0))
-                            screen.fill((0, 0, 0))
-                            screen.blit(label, (0, 0))
-                            pygame.display.flip()
+                            label = myfont.render("Delante", 1, (255, 255, 0), (0, 0, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_RIGHT]:
-                        print("Derecha")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                        if random.randint(0, 99) > 25:
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+                        else:
+                            cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
                         if not currentstate == 1:
                             self.connection.send(b"DOR")
                             currentstate = 1
-                            label = myfont.render("Derecha", 1, (255, 255, 0))
-                            screen.fill((0, 0, 0))
-                            screen.blit(label, (0, 0))
-                            pygame.display.flip()
+                            label = myfont.render("Derecha", 1, (255, 255, 0), (0, 0, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_LEFT]:
-                        print("Izquierda")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                        if random.randint(0, 99) > 25:
+                            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+                        else:
+                            cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
                         if not currentstate == 0:
                             self.connection.send(b"DOL")
                             currentstate = 0
-                            label = myfont.render("Izquierda", 1, (255, 255, 0))
-                            screen.fill((0, 0, 0))
-                            screen.blit(label, (0, 0))
-                            pygame.display.flip()
+                            label = myfont.render("Izquierda", 1, (255, 255, 0), (0, 0, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_DOWN]:
                         if not currentstate == 3:
                             self.connection.send(b"DOB")
                             currentstate = 3
-                            label = myfont.render("Reversa", 1, (255, 255, 0))
-                            screen.fill((0, 0, 0))
-                            screen.blit(label, (0, 0))
-                            pygame.display.flip()
-                        print("Reversa")
+                            label = myfont.render("Reversa", 1, (255, 255, 0), (0, 0, 0))
 
                     elif key_input[pygame.K_x] or key_input[pygame.K_q]:
                         print("Detener el programa")
-                        label = myfont.render("Finalizar programa", 1, (255, 255, 0))
-                        screen.fill((0, 0, 0))
-                        screen.blit(label, (0, 0))
-                        pygame.display.flip()
                         self.connection.send(b"DOE")
                         running = False
                         break
 
                     else:
                         if not currentstate == 4:
-                            print('Esperando ordenes')
-                            label = myfont.render("Detenido", 1, (255, 255, 0))
-                            screen.fill((0, 0, 0))
-                            screen.blit(label, (0, 0))
-                            pygame.display.flip()
+                            label = myfont.render("Detenido", 1, (255, 255, 0), (0, 0, 0))
                             currentstate = 4
                             self.connection.send(b"DOS")
+                    screen.blit(label, (60, 0))
+                    screen.blit(myfont.render(("Total Frames: ", total_frame), 1, (255, 255, 0), (0, 0, 0)), (0, 0))
+                    screen.blit(myfont.render(("Saved Frames: ", saved_frame), 1, (255, 255, 0), (0, 0, 0)), (30, 0))
+                    pygame.display.flip()
                 else:
                     for _ in pygame.event.get():
                         _ = pygame.key.get_pressed()
@@ -222,4 +211,4 @@ if __name__ == '__main__':
     print('Total cuadros           : ', total_frame)
     print('Total cuadros guardados : ', saved_frame)
     print('Total cuadros desechados: ', total_frame - saved_frame)
-    os.system('pause')
+    os.system('exit()')

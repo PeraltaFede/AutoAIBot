@@ -22,13 +22,16 @@ class ABTest(object):
         # self.connection = self.connection.makefile('rb')
 
         pygame.init()
-        pygame.display.set_mode((20, 20), 0, 24)
-        pygame.display.set_caption("Teclado")
-
         self.steer()
 
     def steer(self):
         try:
+            myfont = pygame.font.SysFont("monospace", 15)
+            screen = pygame.display.set_mode((200, 200), 0, 24)
+            label = myfont.render("Detenido", 1, (255, 255, 0))
+            screen.blit(label, (0, 0))
+            pygame.display.flip()
+
             print("Modulo conectado, autobot conectado en: ", self.client_addres)
             print('Presione las flechas para mover el autobot...')
             # siempre se busca un evento del teclado, si alguna tecla esta apretada, se verifica cual y se mueve el auto
@@ -36,33 +39,35 @@ class ABTest(object):
                 for event in pygame.event.get():
                     if event.type == KEYDOWN:
                         key_input = pygame.key.get_pressed()
+
                         # complex orders
                         if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
                             self.connection.send(b"DOR")
-                            print("Delante derecha")
+                            label = myfont.render("Delante Derecha", 1, (255, 255, 0))
 
                         elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
                             self.connection.send(b"DOL")
-                            print("Delante izquierda")
+                            label = myfont.render("Delante Izquierda", 1, (255, 255, 0))
 
                         # simple orders
                         elif key_input[pygame.K_UP]:
                             self.connection.send(b"DOF")
-                            print("Delante")
+                            label = myfont.render("Delante", 1, (255, 255, 0))
 
                         elif key_input[pygame.K_DOWN]:
                             self.connection.send(b"DOB")
-                            print("Reversa")
+                            label = myfont.render("Reversa", 1, (255, 255, 0))
 
                         elif key_input[pygame.K_RIGHT]:
                             self.connection.send(b"DOR")
-                            print("Derecha")
+                            label = myfont.render("Derecha", 1, (255, 255, 0))
 
                         elif key_input[pygame.K_LEFT]:
                             self.connection.send(b"DOL")
-                            print("Izquierda")
+                            label = myfont.render("Izquierda", 1, (255, 255, 0))
+
                         elif key_input[pygame.K_x] or key_input[pygame.K_q]:
-                            print('Salir')
+                            print('Detener el programa')
                             self.connection.send(b"DOE")
                             self.test_drive = False
                             break
@@ -72,22 +77,27 @@ class ABTest(object):
 
                         if key_input[pygame.K_UP]:
                             self.connection.send(b"DOF")
-                            print("Delante")
+                            label = myfont.render("Delante", 1, (255, 255, 0))
 
                         elif key_input[pygame.K_DOWN]:
                             self.connection.send(b"DOB")
-                            print("Reversa")
+                            label = myfont.render("Reversa", 1, (255, 255, 0))
 
                         elif key_input[pygame.K_RIGHT]:
                             self.connection.send(b"DOR")
-                            print("Derecha")
+                            label = myfont.render("Derecha", 1, (255, 255, 0))
 
                         elif key_input[pygame.K_LEFT]:
                             self.connection.send(b"DOL")
-                            print("Izquierda")
+                            label = myfont.render("Izquierda", 1, (255, 255, 0))
+
                         else:
                             self.connection.send(b"DOS")
-                            print('Esperando ordenes')
+                            label = myfont.render("Detenido", 1, (255, 255, 0))
+
+                screen.fill((0, 0, 0))
+                screen.blit(label, (0, 0))
+                pygame.display.flip()
 
             print('Test drive finalizado')
             pygame.quit()

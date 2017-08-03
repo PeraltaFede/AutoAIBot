@@ -4,6 +4,7 @@ import threading
 # noinspection PyCompatibility
 import socketserver
 import os
+import subprocess
 
 import cv2
 import numpy as np
@@ -70,111 +71,71 @@ class NeuralNetwork(object):
         print("Modelo de red neuronal restaurado e iniciado.")
 
     def predict(self, image):
-        y_pred = self.sess.run(self.Y, feed_dict={self.X: image})
-        print(y_pred)
+        global next_direction
+        # Decodificar las imagenes a tensores
+        # Expand dimensions since the model expects images to have shape: [1, None, None, 1]
+        image_np_expanded = np.expand_dims(image, axis=0)
+        image_np_expanded = np.expand_dims(image_np_expanded, axis=3)
+        y_pred = self.sess.run(self.Y, feed_dict={self.X: image_np_expanded})
+        next_direction = np.argmax(y_pred, 1)
 
 
 class AutobotThread(socketserver.StreamRequestHandler):
 
     def handle(self):
-        myfont = pygame.font.SysFont("monospace", 15)
         pygame.init()
+        myfont = pygame.font.SysFont("monospace", 15)
         screen = pygame.display.set_mode((200, 200), 0, 24)
-        screen.set_caption("Teclado")
         label = myfont.render("Detenido", 1, (255, 255, 0))
-        screen.blit(label, (100, 100))
+        screen.blit(label, (0, 0))
+        pygame.display.flip()
 
         print("Conexion establecida en Autobot: ", self.client_address)
-        print('Empieza a coleccionar datos manejando.\nUtiliza las flechas '
-              'para manejar. Solo se guardan los datos Arriba, Izq., Der.')
+        print('Autobot driving iniciado.\nUtiliza las teclas '
+              'q, x para finalizar el programa.')
 
         try:
-            global running, saved_frame, roi, newimg
-            saved_frame = 0
-            currentstate = 4  # 0 = izquierda ; 1 = derecha; 2 = delante ; 3 = reversa; 4 = stop
+            global running, newimg, next_direction
             while running:
                 if newimg:
                     newimg = False
                     cv2.imshow('Computer vision', realimg)
-                    key_input = pygame.key.get_pressed()
                     # ordenes de dos teclas
-                    if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
-                        print("Delante Derecha")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-                        if not currentstate == 1:
-                            self.connection.send(b"DOR")
-                            currentstate = 1
-                            label = myfont.render("Delante Derecha", 1, (255, 255, 0))
-                            screen.blit(label, (100, 100))
-                        saved_frame += 1
+                    if next_direction == 1:
+                        self.connection.send(b"DOR")
+                        label = myfont.render("Derecha", 1, (255, 255, 0))
+                        next_direction = -1
 
-                    elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
-                        print("Delante Izquierda")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-                        if not currentstate == 0:
-                            self.connection.send(b"DOL")
-                            currentstate = 0
-                            label = myfont.render("Delante Izquierda", 1, (255, 255, 0))
-                            screen.blit(label, (100, 100))
-                        saved_frame += 1
+                    elif next_direction == 0:
+                        self.connection.send(b"DOL")
+                        label = myfont.render("Izquierda", 1, (255, 255, 0))
+                        next_direction = -1
 
                         # ordenes una tecla
-                    elif key_input[pygame.K_UP]:
-                        print("Delante")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
-                        if not currentstate == 2:
-                            self.connection.send(b"DOF")
-                            currentstate = 2
-                            label = myfont.render("Delante", 1, (255, 255, 0))
-                            screen.blit(label, (100, 100))
-                        saved_frame += 1
+                    elif next_direction == 2:
+                        self.connection.send(b"DOF")
+                        label = myfont.render("Delante", 1, (255, 255, 0))
+                        next_direction = -1
 
-                    elif key_input[pygame.K_RIGHT]:
-                        print("Derecha")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-                        if not currentstate == 1:
-                            self.connection.send(b"DOR")
-                            currentstate = 1
-                            label = myfont.render("Derecha", 1, (255, 255, 0))
-                            screen.blit(label, (100, 100))
-                        saved_frame += 1
+                    elif next_direction == -1:
+                        label = myfont.render("Detenido", 1, (255, 255, 0))
+                        self.connection.send(b"DOS")
 
-                    elif key_input[pygame.K_LEFT]:
-                        print("Izquierda")
-                        cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-                        if not currentstate == 0:
-                            self.connection.send(b"DOL")
-                            currentstate = 0
-                            label = myfont.render("Izquierda", 1, (255, 255, 0))
-                            screen.blit(label, (100, 100))
-                        saved_frame += 1
+                    screen.fill((0, 0, 0))
+                    screen.blit(label, (0, 0))
+                    pygame.display.flip()
 
-                    elif key_input[pygame.K_DOWN]:
-                        if not currentstate == 3:
-                            self.connection.send(b"DOB")
-                            currentstate = 3
-                            label = myfont.render("Reversa", 1, (255, 255, 0))
-                            screen.blit(label, (100, 100))
-                        print("Reversa")
-
-                    elif key_input[pygame.K_x] or key_input[pygame.K_q]:
+                    key_input = pygame.key.get_pressed()
+                    if key_input[pygame.K_x] or key_input[pygame.K_q]:
                         print("Detener el programa")
-                        label = myfont.render("Finalizar programa", 1, (255, 255, 0))
-                        screen.blit(label, (100, 100))
                         self.connection.send(b"DOE")
                         running = False
                         break
 
-                    else:
-                        if not currentstate == 4:
-                            print('Esperando ordenes')
-                            label = myfont.render("Detenido", 1, (255, 255, 0))
-                            screen.blit(label, (100, 100))
-                            currentstate = 4
-                            self.connection.send(b"DOS")
                 else:
                     for _ in pygame.event.get():
                         _ = pygame.key.get_pressed()
+
             pygame.quit()
             cv2.destroyAllWindows()
         finally:
@@ -186,8 +147,7 @@ class VideoThread(socketserver.StreamRequestHandler):
     name = "Video-Thread"
 
     def handle(self):
-        global running, roi, total_frame, realimg, newimg, neuralnet
-        total_frame = 0
+        global running, roi, realimg, newimg, neuralnet
         print("Conexion establecida video: ", self.client_address)
         running = True
         roi = 0
@@ -214,7 +174,7 @@ class VideoThread(socketserver.StreamRequestHandler):
                 roi = image[120:240, :]
                 realimg = cv2.rectangle(realimg, (0, 120), (318, 238), (30, 230, 30), 1)
                 NeuralNetwork.predict(neuralnet, image=roi)
-                total_frame += 1
+                newimg = True
         finally:
             print('Server finalizado en VideoStreaming')
 
@@ -229,11 +189,15 @@ class ThreadServer(object):
         server = socketserver.TCPServer((host, port), VideoThread)
         server.serve_forever()
 
+    server_ip = '192.168.0.13'
+    if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
+        server_ip = '192.168.43.59'
+    print(server_ip)
     print("Iniciando Threads")
-    video_thread = threading.Thread(target=server_thread2, args=('192.168.0.13', 8000))
+    video_thread = threading.Thread(target=server_thread2, args=(server_ip, 8000))
     video_thread.start()
     print("Video thread iniciado")
-    autobot_thread = threading.Thread(target=server_thread, args=('192.168.0.13', 8001))
+    autobot_thread = threading.Thread(target=server_thread, args=(server_ip, 8001))
     autobot_thread.start()
     print("Autobot thread iniciado")
 
@@ -242,12 +206,10 @@ if __name__ == '__main__':
 
     neuralnet = NeuralNetwork()
     running = True
-    saved_frame = 0
-    total_frame = 0
     roi = None
     realimg = None
     newimg = False
-    # global running, saved_frame, total_frame, roi, realimg, newimg
+    next_direction = -1
     # Start new Threads
     e1 = cv2.getTickCount()
     while running:
@@ -256,7 +218,4 @@ if __name__ == '__main__':
     # calcular el total de streaming
     time0 = (e2 - e1) / cv2.getTickFrequency()
     print("Duracion del streaming:", time0)
-    print('Total cuadros           : ', total_frame)
-    print('Total cuadros guardados : ', saved_frame)
-    print('Total cuadros desechados: ', total_frame - saved_frame)
     os.system('pause')
