@@ -175,8 +175,6 @@ class VideoThread(socketserver.StreamRequestHandler):
                 realimg = cv2.rectangle(realimg, (0, 120), (318, 238), (30, 230, 30), 1)
                 NeuralNetwork.predict(neuralnet, image=roi)
                 newimg = True
-                image_stream.seek(0)
-                image_stream.truncate()
         finally:
             print('Server finalizado en VideoStreaming')
 
