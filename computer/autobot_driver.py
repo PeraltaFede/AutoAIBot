@@ -101,6 +101,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                     NeuralNetwork.predict(neuralnet, image=roi)
                     newimg = False
                     cv2.imshow('Computer vision', realimg)
+                    key_input = pygame.key.get_pressed()
                     # ordenes de dos teclas
                     if next_direction == 1:
                         self.connection.send(b"DOR")
@@ -119,19 +120,20 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         next_direction = -1
 
                     elif next_direction == -1:
+                        print('detenido')
                         label = myfont.render("Detenido", 1, (255, 255, 0))
                         self.connection.send(b"DOS")
 
-                    screen.fill((0, 0, 0))
-                    screen.blit(label, (0, 0))
-                    pygame.display.flip()
-
-                    key_input = pygame.key.get_pressed()
                     if key_input[pygame.K_x] or key_input[pygame.K_q]:
                         print("Detener el programa")
                         self.connection.send(b"DOE")
                         running = False
                         break
+
+                    screen.fill((0, 0, 0))
+                    screen.blit(label, (0, 0))
+                    pygame.display.flip()
+
 
                 else:
                     for _ in pygame.event.get():

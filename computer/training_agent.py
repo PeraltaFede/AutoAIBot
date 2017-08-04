@@ -53,7 +53,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 1:
                             self.connection.send(b"DOR")
                             currentstate = 1
-                            label = myfont.render("Delante Derecha", 1, (255, 255, 0), (0, 0, 0))
+                            label = myfont.render("Delante Derecha", 1, (255, 255, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
@@ -64,7 +64,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 0:
                             self.connection.send(b"DOL")
                             currentstate = 0
-                            label = myfont.render("Delante Izquierda", 1, (255, 255, 0), (0, 0, 0))
+                            label = myfont.render("Delante Izquierda", 1, (255, 255, 0))
                         saved_frame += 1
 
                         # ordenes una tecla
@@ -76,7 +76,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 2:
                             self.connection.send(b"DOF")
                             currentstate = 2
-                            label = myfont.render("Delante", 1, (255, 255, 0), (0, 0, 0))
+                            label = myfont.render("Delante", 1, (255, 255, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_RIGHT]:
@@ -87,7 +87,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 1:
                             self.connection.send(b"DOR")
                             currentstate = 1
-                            label = myfont.render("Derecha", 1, (255, 255, 0), (0, 0, 0))
+                            label = myfont.render("Derecha", 1, (255, 255, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_LEFT]:
@@ -98,14 +98,14 @@ class AutobotThread(socketserver.StreamRequestHandler):
                         if not currentstate == 0:
                             self.connection.send(b"DOL")
                             currentstate = 0
-                            label = myfont.render("Izquierda", 1, (255, 255, 0), (0, 0, 0))
+                            label = myfont.render("Izquierda", 1, (255, 255, 0))
                         saved_frame += 1
 
                     elif key_input[pygame.K_DOWN]:
                         if not currentstate == 3:
                             self.connection.send(b"DOB")
                             currentstate = 3
-                            label = myfont.render("Reversa", 1, (255, 255, 0), (0, 0, 0))
+                            label = myfont.render("Reversa", 1, (255, 255, 0))
 
                     elif key_input[pygame.K_x] or key_input[pygame.K_q]:
                         print("Detener el programa")
@@ -115,14 +115,15 @@ class AutobotThread(socketserver.StreamRequestHandler):
 
                     else:
                         if not currentstate == 4:
-                            label = myfont.render("Detenido", 1, (255, 255, 0), (0, 0, 0))
+                            label = myfont.render("Detenido", 1, (255, 255, 0))
                             currentstate = 4
                             self.connection.send(b"DOS")
+                    screen.fill((0, 0, 0))
                     screen.blit(label, (0, 60))
                     screen.blit(myfont.render(("Total Frames: " + str(total_frame)),
-                                              1, (255, 255, 0), (0, 0, 0)), (0, 0))
+                                              1, (255, 255, 0)), (0, 0))
                     screen.blit(myfont.render(("Saved Frames: " + str(saved_frame)),
-                                              1, (255, 255, 0), (0, 0, 0)), (0, 30))
+                                              1, (255, 255, 0)), (0, 30))
                     pygame.display.flip()
                 else:
                     for _ in pygame.event.get():
