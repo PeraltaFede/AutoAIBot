@@ -41,21 +41,21 @@ class NeuralNetwork(object):
         W3 = tf.Variable(tf.truncated_normal([4, 4, L, M], stddev=0.1))
         B3 = tf.Variable(tf.constant(0.1, tf.float32, [M]))
 
-        W4 = tf.Variable(tf.truncated_normal([15 * 40 * M, N], stddev=0.1))
+        W4 = tf.Variable(tf.truncated_normal([6 * 16 * M, N], stddev=0.1))
         B4 = tf.Variable(tf.constant(0.1, tf.float32, [N]))
         W5 = tf.Variable(tf.truncated_normal([N, 3], stddev=0.1))
         B5 = tf.Variable(tf.constant(0.1, tf.float32, [3]))
 
         # The model
-        stride = 1  # output is 120x320
-        Y1 = tf.nn.relu(tf.nn.conv2d(self.X, W1, strides=[1, stride, stride, 1], padding='SAME') + B1)
         stride = 2  # output is 60x160
+        Y1 = tf.nn.relu(tf.nn.conv2d(self.X, W1, strides=[1, stride, stride, 1], padding='SAME') + B1)
+        stride = 2  # output is 30x80
         Y2 = tf.nn.relu(tf.nn.conv2d(Y1, W2, strides=[1, stride, stride, 1], padding='SAME') + B2)
-        stride = 4  # output is 15x40
+        stride = 5  # output is 6x16
         Y3 = tf.nn.relu(tf.nn.conv2d(Y2, W3, strides=[1, stride, stride, 1], padding='SAME') + B3)
 
         # reshape the output from the third convolution for the fully connected layer
-        YY = tf.reshape(Y3, shape=[-1, 15 * 40 * M])
+        YY = tf.reshape(Y3, shape=[-1, 6 * 16 * M])
 
         Y4 = tf.nn.relu(tf.matmul(YY, W4) + B4)
         Ylogits = tf.matmul(Y4, W5) + B5
