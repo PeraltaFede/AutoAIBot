@@ -23,11 +23,11 @@ train_img_dir = tf.train.match_filenames_once(".\\training_images\\*.jpg")
 test_img_dir = tf.train.match_filenames_once(".\\test_images\\*.jpg")
 
 # Hacer una fila de los archivos a abrir
-filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=False, capacity=629*2)
-test_filename_queue = tf.train.string_input_producer(test_img_dir, shuffle=False, capacity=132*2)
+filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=False, capacity=947)
+test_filename_queue = tf.train.string_input_producer(test_img_dir, shuffle=False, capacity=194)
 
-name_queue = tf.train.string_input_producer(train_img_dir, shuffle=False, capacity=629*2)
-test_name_queue = tf.train.string_input_producer(test_img_dir, shuffle=False, capacity=132*2)
+name_queue = tf.train.string_input_producer(train_img_dir, shuffle=False, capacity=947)
+test_name_queue = tf.train.string_input_producer(test_img_dir, shuffle=False, capacity=194)
 
 # imagereader es un lector que lee un archivo completo a la vez
 image_reader = tf.WholeFileReader()
