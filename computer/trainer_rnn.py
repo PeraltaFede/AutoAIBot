@@ -23,15 +23,19 @@ train_img_dir = tf.train.match_filenames_once(".\\training_images\\*.jpg")
 test_img_dir = tf.train.match_filenames_once(".\\test_images\\*.jpg")
 
 # Hacer una fila de los archivos a abrir
-filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True, capacity=5001)
-test_filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=True, capacity=300)
+filename_queue = tf.train.string_input_producer(train_img_dir, shuffle=False, capacity=629*2)
+test_filename_queue = tf.train.string_input_producer(test_img_dir, shuffle=False, capacity=132*2)
+
+name_queue = tf.train.string_input_producer(train_img_dir, shuffle=False, capacity=629*2)
+test_name_queue = tf.train.string_input_producer(test_img_dir, shuffle=False, capacity=132*2)
 
 # imagereader es un lector que lee un archivo completo a la vez
 image_reader = tf.WholeFileReader()
-test_image_reader = tf.WholeFileReader()
 # leyendo un archivo se obtienen los datos de nombre y datos de la img
-name_file, image_file = image_reader.read(filename_queue)
-test_name_file, test_image_file = test_image_reader.read(test_filename_queue)
+_, image_file = image_reader.read(filename_queue)
+__, test_image_file = image_reader.read(test_filename_queue)
+name_file, ___ = image_reader.read(name_queue)
+test_name_file, ____ = image_reader.read(test_name_queue)
 
 # Decodificar las imagenes a tensores
 image = tf.image.decode_jpeg(image_file, channels=1)
@@ -66,11 +70,11 @@ W5 = tf.Variable(tf.truncated_normal([N, 3], stddev=0.1))
 B5 = tf.Variable(tf.constant(0.1, tf.float32, [3]))
 
 # The model
-stride = 2  # output is 60x160
+stride = 2  # output is 120x320
 Y1 = tf.nn.relu(tf.nn.conv2d(X, W1, strides=[1, stride, stride, 1], padding='SAME') + B1)
-stride = 2  # output is 30x80
+stride = 2  # output is 60x160
 Y2 = tf.nn.relu(tf.nn.conv2d(Y1, W2, strides=[1, stride, stride, 1], padding='SAME') + B2)
-stride = 5  # output is 6x16
+stride = 5  # output is 15x40
 Y3 = tf.nn.relu(tf.nn.conv2d(Y2, W3, strides=[1, stride, stride, 1], padding='SAME') + B3)
 
 # reshape the output from the third convolution for the fully connected layer
@@ -90,13 +94,6 @@ cross_entropy = tf.reduce_mean(cross_entropy)
 # accuracy of the trained model, between 0 (worst) and 1 (best)
 correct_prediction = tf.equal(tf.argmax(Y, 1), tf.argmax(Y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-# matplotlib visualisation
-allweights = tf.concat([tf.reshape(W1, [-1]), tf.reshape(W2, [-1]), tf.reshape(W3, [-1]),
-                        tf.reshape(W4, [-1]), tf.reshape(W5, [-1])], 0)
-allbiases = tf.concat([tf.reshape(B1, [-1]), tf.reshape(B2, [-1]), tf.reshape(B3, [-1]),
-                       tf.reshape(B4, [-1]), tf.reshape(B5, [-1])], 0)
-
-# I = tensorflowvisu.tf_format_mnist_images(X, Y, Y_)
 
 # training step, the learning rate is a placeholder
 train_step = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
@@ -112,7 +109,7 @@ init = (tf.global_variables_initializer(), tf.local_variables_initializer())
 
 # Comenzar una nueva sesion.
 with tf.Session() as sess:
-    order = input('Reentrenar modelo? y/n')
+    order = input('Reentrenar modelo? y/n:\n')
     if order == 'y':
         # Add ops to save and restore all the variables.
         saver = tf.train.Saver()
@@ -121,14 +118,14 @@ with tf.Session() as sess:
         sess.run(init)
         print("Modelo de red neuronal restaurado e iniciado.")
         # learning rate decay
-        max_learning_rate = 0.005
-        min_learning_rate = 0.0001
+        max_learning_rate = 0.0005
+        min_learning_rate = 0.00001
         decay_speed = 2000.0
 
     else:
         sess.run(init)
         # learning rate decay
-        max_learning_rate = 0.01
+        max_learning_rate = 0.003
         min_learning_rate = 0.0001
         decay_speed = 500.0
 
@@ -141,6 +138,10 @@ with tf.Session() as sess:
     testacc = 0
     canttest = 0
     testlos = 0
+    promtestacc = 0
+    promtestlos = 0
+    promacc = 0
+    promlos = 0
     for i in range(sess.run(filename_queue.size())):
         # la totalidad de imagenes corre 4 veces y aqui se hace el training
         name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
@@ -148,21 +149,27 @@ with tf.Session() as sess:
         y_[0, int(name_tensor)] = 1
         image_tensor = sess.run([image])
         learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i/decay_speed)
-        if i % 5 == 0 and i != 0:
+        if i % 10 == 0 and i != 0:
+
+            if i % 100 == 0:
+                trainacc = 0.0
+                canttrain = 0.0
+                trainlos = 0
+
             a, c = sess.run([accuracy, cross_entropy], {X: image_tensor, Y_: y_, pkeep: 1.0})
             os.system('cls')
             print(str(i) + ": TRAIN: accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
-
             canttrain = canttrain + 1
-            trainacc += a
-            trainacc /= canttrain
-            trainlos += c
-            trainlos /= canttrain
-            print("Last 100 accuracy: {}\nLast 100 loss: {}".format(trainacc, trainlos))
-            print("Total Test accuracy: {}\nTotal Test loss: {}".format(testacc, testlos))
+            trainacc = trainacc + a
+            promacc = trainacc / canttrain
+            trainlos = trainlos + c
+            promlos = trainlos / canttrain
+            print("Last 100 accuracy: {:f}\nLast 100 loss: {:f}".format(promacc, promlos))
+            print("Total Test accuracy: {:f}\nTotal Test loss: {:f}".format(promtestacc, promtestlos))
 
-        if i % 10 == 0 and i != 0:
-            test_name_tensor = sess.run([test_name_file])[0].decode('utf-8')[29]
+        if i % 50 == 0 and i != 0:
+            test_name_tensor = sess.run([test_name_file])[0].decode('utf-8')[25]
+            print(test_name_tensor)
             test_y_ = np.zeros([1, 3])
             test_y_[0, int(test_name_tensor)] = 1
             test_image_tensor = sess.run([test_image])
@@ -171,17 +178,12 @@ with tf.Session() as sess:
             print(str(i) + ": TEST : accuracy:" + str(a) + " loss: " + str(c) + " (lr:" + str(learning_rate) + ")")
             canttest = canttest + 1
             testacc += a
-            testacc /= canttest
+            promtestacc = testacc / canttest
             testlos += c
-            testlos /= canttest
+            promtestlos = testlos / canttest
 
-            print("Last 100 accuracy: {}\nLast 100 loss: {}".format(trainacc, trainlos))
-            print("Total Test accuracy: {}\nTotal Test loss: {}".format(testacc, testlos))
-
-            if i % 100 == 0:
-                trainacc = 0.0
-                canttrain = 0.0
-                trainlos = 0
+            print("Last 100 accuracy: {:f}\nLast 100 loss: {:f}".format(promacc, promlos))
+            print("Total Test accuracy: {:f}\nTotal Test loss: {:f}".format(promtestacc, promtestlos))
 
         # the backpropagation training step
         sess.run(train_step, {X: image_tensor, Y_: y_, lr: learning_rate, pkeep: 0.75})
