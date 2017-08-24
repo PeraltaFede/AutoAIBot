@@ -199,7 +199,7 @@ if __name__ == '__main__':
 
     running = True
     saved_frame = 0
-    total_frame = 0
+    total_frame = 1300
     roi = None
     realimg = None
     newimg = False

@@ -50,42 +50,43 @@ lr = tf.placeholder(tf.float32)
 # Probability of keeping a node during dropout = 1.0 at test time (no dropout) and 0.75 at training time
 pkeep = tf.placeholder(tf.float32)
 
-# three convolutional layers with their channel counts, and a
-# fully connected layer (the last layer has 3 softmax neurons)
-K = 6  # first convolutional layer output depth
-L = 12  # second convolutional layer output depth
-M = 24  # third convolutional layer
-N = 200  # fully connected layer
+# five layers and their number of neurons (tha last layer has 10 softmax neurons)
+L = 4000
+M = 800
+N = 200
+O = 50
+# Weights initialised with small random values between -0.2 and +0.2
+# When using RELUs, make sure biases are initialised with small *positive* values for example 0.1 = tf.ones([K])/10
+W1 = tf.Variable(tf.truncated_normal([38400, L], stddev=0.1))  # 120*320 =
+B1 = tf.Variable(tf.ones([L])/10)
+W2 = tf.Variable(tf.truncated_normal([L, M], stddev=0.1))
+B2 = tf.Variable(tf.ones([M])/10)
+W3 = tf.Variable(tf.truncated_normal([M, N], stddev=0.1))
+B3 = tf.Variable(tf.ones([N])/10)
+W4 = tf.Variable(tf.truncated_normal([N, O], stddev=0.1))
+B4 = tf.Variable(tf.ones([O])/10)
+W5 = tf.Variable(tf.truncated_normal([O, 10], stddev=0.1))
+B5 = tf.Variable(tf.zeros([10]))
 
-W1 = tf.Variable(tf.truncated_normal([6, 6, 1, K], stddev=0.1))  # 6x6 patch, 1 input channel, K output channels
-B1 = tf.Variable(tf.constant(0.1, tf.float32, [K]))
-W2 = tf.Variable(tf.truncated_normal([5, 5, K, L], stddev=0.1))
-B2 = tf.Variable(tf.constant(0.1, tf.float32, [L]))
-W3 = tf.Variable(tf.truncated_normal([4, 4, L, M], stddev=0.1))
-B3 = tf.Variable(tf.constant(0.1, tf.float32, [M]))
+# The model, with dropout at each layer
+XX = tf.reshape(X, [-1, 120*320])
 
-W4 = tf.Variable(tf.truncated_normal([6 * 16 * M, N], stddev=0.1))
-B4 = tf.Variable(tf.constant(0.1, tf.float32, [N]))
-W5 = tf.Variable(tf.truncated_normal([N, 3], stddev=0.1))
-B5 = tf.Variable(tf.constant(0.1, tf.float32, [3]))
+Y1 = tf.nn.relu(tf.matmul(XX, W1) + B1)
+Y1d = tf.nn.dropout(Y1, pkeep)
 
-# The model
-stride = 2  # output is 120x320
-Y1 = tf.nn.relu(tf.nn.conv2d(X, W1, strides=[1, stride, stride, 1], padding='SAME') + B1)
-stride = 2  # output is 60x160
-Y2 = tf.nn.relu(tf.nn.conv2d(Y1, W2, strides=[1, stride, stride, 1], padding='SAME') + B2)
-stride = 5  # output is 15x40
-Y3 = tf.nn.relu(tf.nn.conv2d(Y2, W3, strides=[1, stride, stride, 1], padding='SAME') + B3)
+Y2 = tf.nn.relu(tf.matmul(Y1d, W2) + B2)
+Y2d = tf.nn.dropout(Y2, pkeep)
 
-# reshape the output from the third convolution for the fully connected layer
-YY = tf.reshape(Y3, shape=[-1, 6 * 16 * M])
+Y3 = tf.nn.relu(tf.matmul(Y2d, W3) + B3)
+Y3d = tf.nn.dropout(Y3, pkeep)
 
-Y4 = tf.nn.relu(tf.matmul(YY, W4) + B4)
-YY4 = tf.nn.dropout(Y4, pkeep)
-Ylogits = tf.matmul(YY4, W5) + B5
+Y4 = tf.nn.relu(tf.matmul(Y3d, W4) + B4)
+Y4d = tf.nn.dropout(Y4, pkeep)
+
+Ylogits = tf.matmul(Y4d, W5) + B5
 Y = tf.nn.softmax(Ylogits)
 
-# cross-entropy loss function (= -sum(Y_i * log(Yi)) ), normalised for batches of one image
+# cross-entropy loss function (= -sum(Y_i * log(Yi)) ), normalised for batches of 100  images
 # TensorFlow provides the softmax_cross_entropy_with_logits function to avoid numerical stability
 # problems with log(0) which is NaN
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=Ylogits, labels=Y_)
@@ -129,12 +130,13 @@ with tf.Session() as sess:
     promacc = 0
     promlos = 0
     for i in range(sess.run(filename_queue.size())):
+        # learning rate decay
         # la totalidad de imagenes corre 4 veces y aqui se hace el training
         name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
         y_ = np.zeros([1, 3])
         y_[0, int(name_tensor)] = 1
         image_tensor = sess.run([image])
-        learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i/decay_speed)
+        learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i / decay_speed)
         if i % 10 == 0 and i != 0:
 
             if i % 100 == 0:
@@ -174,7 +176,7 @@ with tf.Session() as sess:
         # the backpropagation training step
         sess.run(train_step, {X: image_tensor, Y_: y_, lr: learning_rate, pkeep: 0.75})
 
-    # al terminar se pide unir los threads y finalizar
+        # al terminar se pide unir los threads y finalizar
     coord.request_stop()
     coord.join(threads)
 

@@ -77,7 +77,7 @@ class NeuralNetwork(object):
         image_np_expanded = np.expand_dims(image, axis=0)
         image_np_expanded = np.expand_dims(image_np_expanded, axis=3)
         y_pred = self.sess.run(self.Y, feed_dict={self.X: image_np_expanded})
-        next_direction = np.argmax(y_pred, 1)
+        next_direction = np.argmax(y_pred, 1)[0]
 
 
 class AutobotThread(socketserver.StreamRequestHandler):
@@ -95,35 +95,40 @@ class AutobotThread(socketserver.StreamRequestHandler):
               'q, x para finalizar el programa.')
 
         try:
+            current_direction = -1
             global running, newimg, next_direction, roi
             while running:
                 if newimg:
-                    NeuralNetwork.predict(neuralnet, image=roi)
+                    neuralnet.predict(image=roi)
                     newimg = False
                     cv2.imshow('Computer vision', realimg)
-                    key_input = pygame.key.get_pressed()
                     # ordenes de dos teclas
-                    if next_direction == 1:
+                    if next_direction == 1 and current_direction != 1:
                         self.connection.send(b"DOR")
                         label = myfont.render("Derecha", 1, (255, 255, 0))
                         next_direction = -1
+                        current_direction = 1
 
-                    elif next_direction == 0:
+                    elif next_direction == 0 and current_direction != 0:
                         self.connection.send(b"DOL")
                         label = myfont.render("Izquierda", 1, (255, 255, 0))
                         next_direction = -1
+                        current_direction = 0
 
                         # ordenes una tecla
-                    elif next_direction == 2:
+                    elif next_direction == 2 and current_direction != 2:
                         self.connection.send(b"DOF")
                         label = myfont.render("Delante", 1, (255, 255, 0))
                         next_direction = -1
+                        current_direction = 2
 
-                    elif next_direction == -1:
+                    elif next_direction == -1 and current_direction != -1:
                         print('detenido')
                         label = myfont.render("Detenido", 1, (255, 255, 0))
                         self.connection.send(b"DOS")
+                        current_direction = -1
 
+                    key_input = pygame.key.get_pressed()
                     if key_input[pygame.K_x] or key_input[pygame.K_q]:
                         print("Detener el programa")
                         self.connection.send(b"DOE")
@@ -133,7 +138,6 @@ class AutobotThread(socketserver.StreamRequestHandler):
                     screen.fill((0, 0, 0))
                     screen.blit(label, (0, 0))
                     pygame.display.flip()
-
 
                 else:
                     for _ in pygame.event.get():
@@ -202,6 +206,8 @@ class ThreadServer(object):
     autobot_thread = threading.Thread(target=server_thread, args=(server_ip, 8001))
     autobot_thread.start()
     print("Autobot thread iniciado")
+    autobot_thread.join()
+    video_thread.join()
 
 
 if __name__ == '__main__':
@@ -214,10 +220,3 @@ if __name__ == '__main__':
     next_direction = -1
     # Start new Threads
     e1 = cv2.getTickCount()
-    while running:
-        pass
-    e2 = cv2.getTickCount()
-    # calcular el total de streaming
-    time0 = (e2 - e1) / cv2.getTickFrequency()
-    print("Duracion del streaming:", time0)
-    os.system('pause')
