@@ -25,39 +25,39 @@ except ImportError:
 class NeuralNetwork(object):
 
     def __init__(self):
+        # input X: 28x28 grayscale images, the first dimension (None) will index the images in the mini-batch
         self.X = tf.placeholder(tf.float32, [1, 120, 320, 1])
 
-        # three convolutional layers with their channel counts, and a
-        # fully connected layer (the last layer has 3 softmax neurons)
-        K = 6  # first convolutional layer output depth
-        L = 12  # second convolutional layer output depth
-        M = 24  # third convolutional layer
-        N = 200  # fully connected layer
+        # five layers and their number of neurons (tha last layer has 10 softmax neurons)
+        L = 400
+        M = 100
+        N = 50
+        O = 20
+        # Weights initialised with small random values between -0.2 and +0.2
+        # When using RELUs, make sure biases are initialised with small *positive* values for example 0.1 = tf.ones
+        # ([K])/10
+        W1 = tf.Variable(tf.truncated_normal([38400, L], stddev=0.1))  # 120*320 =
+        B1 = tf.Variable(tf.ones([L]) / 10)
+        W2 = tf.Variable(tf.truncated_normal([L, M], stddev=0.1))
+        B2 = tf.Variable(tf.ones([M]) / 10)
+        W3 = tf.Variable(tf.truncated_normal([M, N], stddev=0.1))
+        B3 = tf.Variable(tf.ones([N]) / 10)
+        W4 = tf.Variable(tf.truncated_normal([N, O], stddev=0.1))
+        B4 = tf.Variable(tf.ones([O]) / 10)
+        W5 = tf.Variable(tf.truncated_normal([O, 3], stddev=0.1))
+        B5 = tf.Variable(tf.zeros([3]))
 
-        W1 = tf.Variable(tf.truncated_normal([6, 6, 1, K], stddev=0.1))  # 6x6 patch, 1 input channel, K output channels
-        B1 = tf.Variable(tf.constant(0.1, tf.float32, [K]))
-        W2 = tf.Variable(tf.truncated_normal([5, 5, K, L], stddev=0.1))
-        B2 = tf.Variable(tf.constant(0.1, tf.float32, [L]))
-        W3 = tf.Variable(tf.truncated_normal([4, 4, L, M], stddev=0.1))
-        B3 = tf.Variable(tf.constant(0.1, tf.float32, [M]))
+        # The model, with dropout at each layer
+        XX = tf.reshape(self.X, [-1, 120 * 320])
 
-        W4 = tf.Variable(tf.truncated_normal([6 * 16 * M, N], stddev=0.1))
-        B4 = tf.Variable(tf.constant(0.1, tf.float32, [N]))
-        W5 = tf.Variable(tf.truncated_normal([N, 3], stddev=0.1))
-        B5 = tf.Variable(tf.constant(0.1, tf.float32, [3]))
+        Y1 = tf.nn.relu(tf.matmul(XX, W1) + B1)
 
-        # The model
-        stride = 2  # output is 60x160
-        Y1 = tf.nn.relu(tf.nn.conv2d(self.X, W1, strides=[1, stride, stride, 1], padding='SAME') + B1)
-        stride = 2  # output is 30x80
-        Y2 = tf.nn.relu(tf.nn.conv2d(Y1, W2, strides=[1, stride, stride, 1], padding='SAME') + B2)
-        stride = 5  # output is 6x16
-        Y3 = tf.nn.relu(tf.nn.conv2d(Y2, W3, strides=[1, stride, stride, 1], padding='SAME') + B3)
+        Y2 = tf.nn.relu(tf.matmul(Y1, W2) + B2)
 
-        # reshape the output from the third convolution for the fully connected layer
-        YY = tf.reshape(Y3, shape=[-1, 6 * 16 * M])
+        Y3 = tf.nn.relu(tf.matmul(Y2, W3) + B3)
 
-        Y4 = tf.nn.relu(tf.matmul(YY, W4) + B4)
+        Y4 = tf.nn.relu(tf.matmul(Y3, W4) + B4)
+
         Ylogits = tf.matmul(Y4, W5) + B5
         self.Y = tf.nn.softmax(Ylogits)
 
@@ -83,6 +83,7 @@ class NeuralNetwork(object):
 class AutobotThread(socketserver.StreamRequestHandler):
 
     def handle(self):
+        neuralnet = NeuralNetwork()
         pygame.init()
         myfont = pygame.font.SysFont("monospace", 15)
         screen = pygame.display.set_mode((200, 200), 0, 24)
@@ -101,6 +102,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
                 if newimg:
                     neuralnet.predict(image=roi)
                     newimg = False
+                    cv2.imshow('Computer vision', realimg)
                     # ordenes de dos teclas
                     if next_direction == 1 and current_direction != 1:
                         self.connection.send(b"DOR")
@@ -138,6 +140,10 @@ class AutobotThread(socketserver.StreamRequestHandler):
                     screen.blit(label, (0, 0))
                     pygame.display.flip()
 
+                else:
+                    for _ in pygame.event.get():
+                        _ = pygame.key.get_pressed()
+
             pygame.quit()
             cv2.destroyAllWindows()
         finally:
@@ -149,7 +155,7 @@ class VideoThread(socketserver.StreamRequestHandler):
     name = "Video-Thread"
 
     def handle(self):
-        global running, roi, newimg
+        global running, roi, realimg, newimg, neuralnet
         print("Conexion establecida video: ", self.client_address)
         running = True
         roi = 0
@@ -170,9 +176,11 @@ class VideoThread(socketserver.StreamRequestHandler):
 
                 image_stream.seek(0)
                 jpg = image_stream.read()
-                roi = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+                realimg = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+                image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
                 # region es Y, X
-                roi = roi[120:240, :]
+                roi = image[120:240, :]
+                realimg = cv2.rectangle(realimg, (0, 120), (318, 238), (30, 230, 30), 1)
                 newimg = True
         finally:
             print('Server finalizado en VideoStreaming')
@@ -191,6 +199,7 @@ class ThreadServer(object):
     server_ip = '192.168.0.13'
     if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
         server_ip = '192.168.43.59'
+    print(server_ip)
     print("Iniciando Threads")
     video_thread = threading.Thread(target=server_thread2, args=(server_ip, 8000))
     video_thread.start()
@@ -204,9 +213,10 @@ class ThreadServer(object):
 
 if __name__ == '__main__':
 
-    neuralnet = NeuralNetwork()
     running = True
     roi = None
     realimg = None
     newimg = False
     next_direction = -1
+    # Start new Threads
+    e1 = cv2.getTickCount()

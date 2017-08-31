@@ -51,10 +51,10 @@ lr = tf.placeholder(tf.float32)
 pkeep = tf.placeholder(tf.float32)
 
 # five layers and their number of neurons (tha last layer has 10 softmax neurons)
-L = 4000
-M = 800
-N = 200
-O = 50
+L = 400
+M = 100
+N = 50
+O = 20
 # Weights initialised with small random values between -0.2 and +0.2
 # When using RELUs, make sure biases are initialised with small *positive* values for example 0.1 = tf.ones([K])/10
 W1 = tf.Variable(tf.truncated_normal([38400, L], stddev=0.1))  # 120*320 =
@@ -65,8 +65,8 @@ W3 = tf.Variable(tf.truncated_normal([M, N], stddev=0.1))
 B3 = tf.Variable(tf.ones([N])/10)
 W4 = tf.Variable(tf.truncated_normal([N, O], stddev=0.1))
 B4 = tf.Variable(tf.ones([O])/10)
-W5 = tf.Variable(tf.truncated_normal([O, 10], stddev=0.1))
-B5 = tf.Variable(tf.zeros([10]))
+W5 = tf.Variable(tf.truncated_normal([O, 3], stddev=0.1))
+B5 = tf.Variable(tf.zeros([3]))
 
 # The model, with dropout at each layer
 XX = tf.reshape(X, [-1, 120*320])

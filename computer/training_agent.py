@@ -13,7 +13,7 @@ import pygame
 
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
-# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD. debe funcionar SOLO recibiendo imagenes y enviando la direccion
+# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
 try:
     # noinspection PyUnresolvedReferences
     from cv2 import cv2
@@ -42,7 +42,6 @@ class AutobotThread(socketserver.StreamRequestHandler):
             while running:
                 if newimg:
                     newimg = False
-                    cv2.imshow('Computer vision', realimg)
                     key_input = pygame.key.get_pressed()
                     # ordenes de dos teclas
                     if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
@@ -140,7 +139,7 @@ class VideoThread(socketserver.StreamRequestHandler):
     name = "Video-Thread"
 
     def handle(self):
-        global running, roi, total_frame, realimg, newimg
+        global running, roi, total_frame, newimg
         total_frame = 0
         print("Conexion establecida video: ", self.client_address)
         running = True
@@ -162,11 +161,9 @@ class VideoThread(socketserver.StreamRequestHandler):
 
                 image_stream.seek(0)
                 jpg = image_stream.read()
-                realimg = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
-                image = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+                roi = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
                 # region es Y, X
-                roi = image[120:240, :]
-                realimg = cv2.rectangle(realimg, (0, 120), (318, 238), (30, 230, 30), 1)
+                roi = roi[120:240, :]
                 newimg = True
                 total_frame += 1
         finally:
@@ -201,7 +198,6 @@ if __name__ == '__main__':
     saved_frame = 0
     total_frame = 1300
     roi = None
-    realimg = None
     newimg = False
     e1 = cv2.getTickCount()
     ThreadServer()
