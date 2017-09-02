@@ -25,10 +25,9 @@ try:
     with picamera.PiCamera() as camera:
         # resolucion de la camara, cuadros por segundo
         camera.resolution = (320, 240)
-        camera.framerate = 10
+        camera.framerate = 9
         # se duerme por 2 segundos para inicializar
         time.sleep(2)
-        start = time.time()     # tiempo de inicio
         stream = io.BytesIO()   # envio de datos por bytes IO
 
         # envio de video formato JPEG
@@ -39,9 +38,6 @@ try:
             # rebobinar la imagen y enviarla como tal
             stream.seek(0)
             connection.write(stream.read())
-            # si ya se establecio conexion hace mas de 600 segundos detener
-            if time.time() - start > 600:
-                break
             # situar al stream en una nueva posicion para la proxima captura
             stream.seek(0)
             stream.truncate()

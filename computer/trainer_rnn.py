@@ -1,9 +1,10 @@
-import cv2
-import math
-import numpy as np
-from PIL import Image
 import os
+
+import math
+import cv2
+import numpy as np
 import tensorflow as tf
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
@@ -98,7 +99,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 # training step, the learning rate is a placeholder
 train_step = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
-t0 = (cv2.getTickCount() - e0)/cv2.getTickFrequency()
+t0 = (cv2.getTickCount() - e0) / cv2.getTickFrequency()
 print('Carga de datos correcta en tiempo ', t0)
 # iniciar
 print('Iniciando la sesion ')
@@ -130,39 +131,12 @@ with tf.Session() as sess:
     promacc = 0
     promlos = 0
     for i in range(sess.run(filename_queue.size())):
-        name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
-        full_name = "ninguno"
-        if int(name_tensor) == 0:
-            full_name = "Izquierda"
-        elif int(name_tensor) == 1:
-            full_name = "Derecha"
-        elif int(name_tensor) == 2:
-            full_name = "Adelante"
-        imageugh2 = image.eval()
-        imageugh = np.asarray(imageugh2, dtype=np.uint8)
-        imageugh = cv2.putText(imageugh, full_name, (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, 255)
-        cv2.imshow('Lol', imageugh)
-        cv2.waitKey()
-
-    # al terminar se pide unir los threads y finalizar
-    coord.request_stop()
-    coord.join(threads)
-
-    saver = tf.train.Saver()
-    save_path = saver.save(sess, "./trained_model/model.ckpt")
-    print("Model saved in file: %s" % save_path)
-    t0 = (cv2.getTickCount() - e1) / cv2.getTickFrequency()
-    print("Tiempo de entrenamiento: ", t0)
-    os.system('pause')
-
-
-"""
-      # la totalidad de imagenes corre 4 veces y aqui se hace el training
+        # la totalidad de imagenes corre 4 veces y aqui se hace el training
         name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
         y_ = np.zeros([1, 3])
         y_[0, int(name_tensor)] = 1
         image_tensor = sess.run([image])
-        learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i/decay_speed)
+        learning_rate = min_learning_rate + (max_learning_rate - min_learning_rate) * math.exp(-i / decay_speed)
         if i % 10 == 0 and i != 0:
 
             if i % 100 == 0:
@@ -201,4 +175,30 @@ with tf.Session() as sess:
 
         # the backpropagation training step
         sess.run(train_step, {X: image_tensor, Y_: y_, lr: learning_rate, pkeep: 0.75})
+
+    # al terminar se pide unir los threads y finalizar
+    coord.request_stop()
+    coord.join(threads)
+
+    saver = tf.train.Saver()
+    save_path = saver.save(sess, "./trained_model/model.ckpt")
+    print("Model saved in file: %s" % save_path)
+    t0 = (cv2.getTickCount() - e1) / cv2.getTickFrequency()
+    print("Tiempo de entrenamiento: ", t0)
+    os.system('pause')
+
+"""
+        name_tensor = sess.run([name_file])[0].decode('utf-8')[29]
+        full_name = "ninguno"
+        if int(name_tensor) == 0:
+            full_name = "Izquierda"
+        elif int(name_tensor) == 1:
+            full_name = "Derecha"
+        elif int(name_tensor) == 2:
+            full_name = "Adelante"
+        imageugh2 = image.eval()
+        imageugh = np.asarray(imageugh2, dtype=np.uint8)
+        imageugh = cv2.putText(imageugh, full_name, (0, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, 255)
+        cv2.imshow('Lol', imageugh)
+        cv2.waitKey()
 """

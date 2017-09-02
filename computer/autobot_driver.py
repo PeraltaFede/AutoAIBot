@@ -96,7 +96,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
 
         try:
             current_direction = -1
-            global running, newimg, next_direction, roi
+            global running, newimg, next_direction, roi, neuralnet
             while running:
                 if newimg:
                     neuralnet.predict(image=roi)
@@ -149,7 +149,7 @@ class VideoThread(socketserver.StreamRequestHandler):
     name = "Video-Thread"
 
     def handle(self):
-        global running, roi, newimg
+        global running, roi, newimg, neuralnet
         print("Conexion establecida video: ", self.client_address)
         running = True
         roi = 0
@@ -198,8 +198,6 @@ class ThreadServer(object):
     autobot_thread = threading.Thread(target=server_thread, args=(server_ip, 8001))
     autobot_thread.start()
     print("Autobot thread iniciado")
-    autobot_thread.join()
-    video_thread.join()
 
 
 if __name__ == '__main__':
