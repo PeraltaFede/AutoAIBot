@@ -132,6 +132,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
             cv2.destroyAllWindows()
         finally:
             print('Server finalizado en AutobotDriver')
+            self.server.shutdown()
 
 
 class VideoThread(socketserver.StreamRequestHandler):
@@ -168,6 +169,7 @@ class VideoThread(socketserver.StreamRequestHandler):
                 total_frame += 1
         finally:
             print('Server finalizado en VideoStreaming')
+            self.server.shutdown()
 
 
 class ThreadServer(object):
@@ -183,13 +185,13 @@ class ThreadServer(object):
     server_ip = '192.168.0.13'
     if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
         server_ip = '192.168.43.59'
-    print(server_ip)
+    print("Iniciando Threads")
     video_thread = threading.Thread(target=server_thread2, args=(server_ip, 8000))
     video_thread.start()
-    print("Video thread started")
+    print("Video thread iniciado")
     autobot_thread = threading.Thread(target=server_thread, args=(server_ip, 8001))
     autobot_thread.start()
-    print("Autobot thread started")
+    print("Autobot thread iniciado")
 
 
 if __name__ == '__main__':
@@ -200,11 +202,10 @@ if __name__ == '__main__':
     roi = None
     newimg = False
     e1 = cv2.getTickCount()
-    ThreadServer()
     while running:
         pass
-    e2 = cv2.getTickCount()
     # calcular el total de streaming
+    e2 = cv2.getTickCount()
     time0 = (e2 - e1) / cv2.getTickFrequency()
     print("Duracion del streaming:", time0)
     print('Total cuadros           : ', total_frame)
