@@ -32,8 +32,7 @@ class AutobotThread(socketserver.StreamRequestHandler):
         pygame.display.flip()
 
         print("Conexion establecida en Autobot: ", self.client_address)
-        print('Empieza a coleccionar datos manejando.\nUtiliza las flechas '
-              'para manejar. Solo se guardan los datos Arriba, Izq., Der.')
+        print()
 
         try:
             global running, saved_frame, roi, newimg

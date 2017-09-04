@@ -2,15 +2,15 @@
 inicializar este script primero, y luego abrir camera_stream en el pi
 se
 """
-import numpy as np
-import cv2
-import pygame
+import io
+import os
 import socket
 import struct
-import os
-import io
 import subprocess
 
+import cv2
+import numpy as np
+import pygame
 from pygame.locals import *
 
 # para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
@@ -23,7 +23,6 @@ except ImportError:
 
 
 class CameraTest(object):
-
     def __init__(self):
 
         self.server_socket = socket.socket()
@@ -99,12 +98,13 @@ class CameraTest(object):
             print("Duracion del streaming:", time0)
             print('Total cuadros   : ', total_frame)
         finally:
-            
+
             pygame.quit()
             self.connection.close()
             self.server_socket.close()
             cv2.destroyAllWindows()
             os.system("pause")
+
 
 if __name__ == '__main__':
     server_ip = '192.168.0.13'
