@@ -1,17 +1,11 @@
-import cv2
 import math
-import numpy as np
 import os
-import tensorflow as tf
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
-# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD
-try:
-    # noinspection PyUnresolvedReferences
-    from cv2 import cv2
-except ImportError:
-    pass
+import cv2
+import numpy as np
+import tensorflow as tf
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 print('Cargando datos para entrenamiento...')
 e0 = cv2.getTickCount()
@@ -58,18 +52,18 @@ O = 20
 # Weights initialised with small random values between -0.2 and +0.2
 # When using RELUs, make sure biases are initialised with small *positive* values for example 0.1 = tf.ones([K])/10
 W1 = tf.Variable(tf.truncated_normal([38400, L], stddev=0.1))  # 120*320 =
-B1 = tf.Variable(tf.ones([L])/10)
+B1 = tf.Variable(tf.ones([L]) / 10)
 W2 = tf.Variable(tf.truncated_normal([L, M], stddev=0.1))
-B2 = tf.Variable(tf.ones([M])/10)
+B2 = tf.Variable(tf.ones([M]) / 10)
 W3 = tf.Variable(tf.truncated_normal([M, N], stddev=0.1))
-B3 = tf.Variable(tf.ones([N])/10)
+B3 = tf.Variable(tf.ones([N]) / 10)
 W4 = tf.Variable(tf.truncated_normal([N, O], stddev=0.1))
-B4 = tf.Variable(tf.ones([O])/10)
+B4 = tf.Variable(tf.ones([O]) / 10)
 W5 = tf.Variable(tf.truncated_normal([O, 3], stddev=0.1))
 B5 = tf.Variable(tf.zeros([3]))
 
 # The model, with dropout at each layer
-XX = tf.reshape(X, [-1, 120*320])
+XX = tf.reshape(X, [-1, 120 * 320])
 
 Y1 = tf.nn.relu(tf.matmul(XX, W1) + B1)
 Y1d = tf.nn.dropout(Y1, pkeep)
@@ -98,7 +92,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 # training step, the learning rate is a placeholder
 train_step = tf.train.AdamOptimizer(lr).minimize(cross_entropy)
-t0 = (cv2.getTickCount() - e0)/cv2.getTickFrequency()
+t0 = (cv2.getTickCount() - e0) / cv2.getTickFrequency()
 print('Carga de datos correcta en tiempo ', t0)
 # iniciar
 print('Iniciando la sesion ')

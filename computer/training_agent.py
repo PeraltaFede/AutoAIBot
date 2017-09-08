@@ -1,28 +1,18 @@
 import io
-import struct
-import threading
+import os
+import random
 # noinspection PyCompatibility
 import socketserver
-import os
+import struct
 import subprocess
-import random
+import threading
 
 import cv2
 import numpy as np
 import pygame
 
 
-# para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
-# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
-try:
-    # noinspection PyUnresolvedReferences
-    from cv2 import cv2
-except ImportError:
-    pass
-
-
 class AutobotThread(socketserver.StreamRequestHandler):
-
     def handle(self):
         pygame.init()
         myfont = pygame.font.SysFont("monospace", 15)
@@ -135,7 +125,6 @@ class AutobotThread(socketserver.StreamRequestHandler):
 
 
 class VideoThread(socketserver.StreamRequestHandler):
-
     name = "Video-Thread"
 
     def handle(self):
@@ -172,7 +161,6 @@ class VideoThread(socketserver.StreamRequestHandler):
 
 
 class ThreadServer(object):
-
     def server_thread(host, port):
         server = socketserver.TCPServer((host, port), AutobotThread)
         server.serve_forever()

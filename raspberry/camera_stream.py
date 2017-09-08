@@ -7,9 +7,10 @@ IMPORTANTE: iniciar esto segundo para asegurar que el servidor esta escuchando
 import io
 import socket
 import struct
-import time
-import picamera
 import subprocess
+import time
+
+import picamera
 
 # Se crea e inicializa un zocalo de cliente para enviar los datos
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,7 +29,7 @@ try:
         camera.framerate = 9
         # se duerme por 2 segundos para inicializar
         time.sleep(2)
-        stream = io.BytesIO()   # envio de datos por bytes IO
+        stream = io.BytesIO()  # envio de datos por bytes IO
 
         # envio de video formato JPEG
         for _ in camera.capture_continuous(stream, 'jpeg', use_video_port=True):

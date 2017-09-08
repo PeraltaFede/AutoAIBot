@@ -1,29 +1,20 @@
 import io
-import struct
-import threading
+import os
 # noinspection PyCompatibility
 import socketserver
-import os
+import struct
 import subprocess
+import threading
 
 import cv2
 import numpy as np
 import pygame
 import tensorflow as tf
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
-# para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
-# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
-try:
-    # noinspection PyUnresolvedReferences
-    from cv2 import cv2
-except ImportError:
-    pass
-
-
 class NeuralNetwork(object):
-
     def __init__(self):
         # input X: 28x28 grayscale images, the first dimension (None) will index the images in the mini-batch
         self.X = tf.placeholder(tf.float32, [1, 120, 320, 1])
@@ -81,7 +72,6 @@ class NeuralNetwork(object):
 
 
 class AutobotThread(socketserver.StreamRequestHandler):
-
     def handle(self):
         neuralnet = NeuralNetwork()
         pygame.init()
@@ -151,7 +141,6 @@ class AutobotThread(socketserver.StreamRequestHandler):
 
 
 class VideoThread(socketserver.StreamRequestHandler):
-
     name = "Video-Thread"
 
     def handle(self):
@@ -187,7 +176,6 @@ class VideoThread(socketserver.StreamRequestHandler):
 
 
 class ThreadServer(object):
-
     def server_thread(host, port):
         server = socketserver.TCPServer((host, port), AutobotThread)
         server.serve_forever()
@@ -212,7 +200,6 @@ class ThreadServer(object):
 
 
 if __name__ == '__main__':
-
     running = True
     roi = None
     realimg = None

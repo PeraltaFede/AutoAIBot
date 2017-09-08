@@ -5,6 +5,7 @@ IMPORTANTE: iniciar esto segundo para asegurar que el servidor esta escuchando
 """
 import socket
 import subprocess
+
 from gpiozero import Motor
 
 
@@ -32,6 +33,7 @@ class Autobot(object):
     def stop(self):
         self.left_motor.stop()
         self.right_motor.stop()
+
 
 if __name__ == '__main__':
 

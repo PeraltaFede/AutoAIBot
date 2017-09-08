@@ -13,14 +13,6 @@ import numpy as np
 import pygame
 from pygame.locals import *
 
-# para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
-# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
-try:
-    # noinspection PyUnresolvedReferences
-    from cv2 import cv2
-except ImportError:
-    pass
-
 
 class CameraTest(object):
     def __init__(self):

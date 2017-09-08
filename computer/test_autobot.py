@@ -1,12 +1,12 @@
-import pygame
 import os
 import socket
 import subprocess
+
+import pygame
 from pygame.locals import *
 
 
 class ABTest(object):
-
     def __init__(self):
 
         print("Iniciando modulo prueba de autobot")

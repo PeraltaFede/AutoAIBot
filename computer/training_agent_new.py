@@ -10,14 +10,6 @@ import cv2
 import numpy as np
 import pygame
 
-# para no confundir a pycharm y usar las librerias se debe agregar asi si no sale el autocomplete
-# TODO: ELIMINAR ESTA PARTE Y TESTEAR DESDE CMD.
-try:
-    # noinspection PyUnresolvedReferences
-    from cv2 import cv2
-except ImportError:
-    pass
-
 server_ip = '192.168.0.13'
 if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
     server_ip = '192.168.43.59'
@@ -28,7 +20,6 @@ server_video_socket = socket.socket()
 server_video_socket.bind((server_ip, 8000))
 print("Esperando conexion de video, inicie ahora camera_stream.py en el AutoBot...")
 server_video_socket.listen()
-print('asdf')
 video_connection, client_video_address = server_video_socket.accept()
 video_connection = video_connection.makefile('rb')
 print("Conexion establecida de video en", client_video_address)
@@ -46,8 +37,6 @@ pygame.init()
 running = True
 saved_frame = 0
 total_frame = 0
-roi = None
-newimg = False
 e1 = cv2.getTickCount()
 
 try:
@@ -78,10 +67,8 @@ try:
         roi = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
         # region es Y, X
         roi = roi[120:240, :]
-        total_frame += 1
         # mostrar la imagen
         # cv2.imshow('Computer Vision', image)
-
         total_frame += 1
         key_input = pygame.key.get_pressed()
         # ordenes de dos teclas
@@ -159,6 +146,9 @@ try:
                 currentstate = 4
                 control_connection.send(b"DOS")
 
+        for _ in pygame.event.get():
+            _ = pygame.key.get_pressed()
+
         screen.fill((0, 0, 0))
         screen.blit(label, (0, 60))
         screen.blit(myfont.render(("Total Frames: " + str(total_frame)),
@@ -166,13 +156,6 @@ try:
         screen.blit(myfont.render(("Saved Frames: " + str(saved_frame)),
                                   1, (255, 255, 0)), (0, 30))
         pygame.display.flip()
-
-    e2 = cv2.getTickCount()
-    # calcular el total de streaming
-    time0 = (e2 - e1) / cv2.getTickFrequency()
-    print("Duracion del streaming:", time0)
-    print('Total cuadros   : ', total_frame)
-
 
 finally:
 
