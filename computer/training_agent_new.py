@@ -1,7 +1,6 @@
 import io
-import os
-import random
 import socket
+import os
 # noinspection PyCompatibility
 import struct
 import subprocess
@@ -73,10 +72,7 @@ try:
         key_input = pygame.key.get_pressed()
         # ordenes de dos teclas
         if key_input[pygame.K_UP] and key_input[pygame.K_RIGHT]:
-            if random.randint(0, 99) > 10:
-                cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-            else:
-                cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
             if not currentstate == 1:
                 control_connection.send(b"DOR")
                 currentstate = 1
@@ -84,10 +80,7 @@ try:
             saved_frame += 1
 
         elif key_input[pygame.K_UP] and key_input[pygame.K_LEFT]:
-            if random.randint(0, 99) > 10:
-                cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-            else:
-                cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
             if not currentstate == 0:
                 control_connection.send(b"DOL")
                 currentstate = 0
@@ -96,10 +89,7 @@ try:
 
             # ordenes una tecla
         elif key_input[pygame.K_UP]:
-            if random.randint(0, 99) > 10:
-                cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
-            else:
-                cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
+            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 2), roi)
             if not currentstate == 2:
                 control_connection.send(b"DOF")
                 currentstate = 2
@@ -107,10 +97,7 @@ try:
             saved_frame += 1
 
         elif key_input[pygame.K_RIGHT]:
-            if random.randint(0, 99) > 10:
-                cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
-            else:
-                cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
+            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 1), roi)
             if not currentstate == 1:
                 control_connection.send(b"DOR")
                 currentstate = 1
@@ -118,10 +105,7 @@ try:
             saved_frame += 1
 
         elif key_input[pygame.K_LEFT]:
-            if random.randint(0, 99) > 10:
-                cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
-            else:
-                cv2.imwrite('test_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
+            cv2.imwrite('training_images/frame{:>05}-{:>01}.jpg'.format(total_frame, 0), roi)
             if not currentstate == 0:
                 control_connection.send(b"DOL")
                 currentstate = 0
