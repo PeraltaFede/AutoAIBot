@@ -26,7 +26,7 @@ try:
     with picamera.PiCamera() as camera:
         # resolucion de la camara, cuadros por segundo
         camera.resolution = (320, 240)
-        camera.framerate = 9
+        camera.framerate = 8
         # se duerme por 2 segundos para inicializar
         time.sleep(2)
         stream = io.BytesIO()  # envio de datos por bytes IO

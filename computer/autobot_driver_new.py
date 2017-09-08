@@ -107,6 +107,7 @@ if __name__ == '__main__':
         current_direction = -1
 
         while running:
+            a1 = cv2.getTickCount()
             # Read the length of the image as a 32-bit unsigned int. If the
             # length is zero, quit the loop
             image_len = struct.unpack('<L', video_connection.read(struct.calcsize('<L')))[0]
@@ -125,31 +126,34 @@ if __name__ == '__main__':
             # region es Y, X
             roi = roi[120:240, :]
             # mostrar la imagen
-            cv2.imshow('Computer Vision', roi)
+            # cv2.imshow('Computer Vision', roi)
+            # cv2.imwrite('frame.jpg', roi)
             neuralnet.predict(image=roi)
             newimg = False
             key_input = pygame.key.get_pressed()
             # ordenes de dos teclas
-            if next_direction == 1 and current_direction != 1:
-                control_connection.send(b"DOR")
+            if next_direction == 1:
                 label = myfont.render("Derecha", 1, (255, 255, 0))
-                next_direction = -1
-                current_direction = 1
+                if current_direction != 1:
+                    control_connection.send(b"DOR")
+                    next_direction = -1
+                    current_direction = 1
 
-            elif next_direction == 0 and current_direction != 0:
-                control_connection.send(b"DOL")
+            elif next_direction == 0:
                 label = myfont.render("Izquierda", 1, (255, 255, 0))
-                next_direction = -1
-                current_direction = 0
+                if current_direction != 0:
+                    control_connection.send(b"DOL")
+                    next_direction = -1
+                    current_direction = 0
 
-                # ordenes una tecla
-            elif next_direction == 2 and current_direction != 2:
-                control_connection.send(b"DOF")
+            elif next_direction == 2:
                 label = myfont.render("Delante", 1, (255, 255, 0))
-                next_direction = -1
-                current_direction = 2
+                if current_direction != 2:
+                    control_connection.send(b"DOF")
+                    next_direction = -1
+                    current_direction = 2
 
-            elif next_direction == -1 and current_direction != -1:
+            else:
                 label = myfont.render("Detenido", 1, (255, 255, 0))
                 control_connection.send(b"DOS")
                 current_direction = -1
@@ -164,6 +168,10 @@ if __name__ == '__main__':
             screen.fill((0, 0, 0))
             screen.blit(label, (0, 0))
             pygame.display.flip()
+
+            a2 = cv2.getTickCount()
+            time1 = (a2 - a1) / cv2.getTickFrequency()
+            print(time1)
 
     finally:
         pygame.quit()
