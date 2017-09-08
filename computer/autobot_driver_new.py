@@ -125,11 +125,10 @@ if __name__ == '__main__':
             # region es Y, X
             roi = roi[120:240, :]
             # mostrar la imagen
-            # cv2.imshow('Computer Vision', image)
+            cv2.imshow('Computer Vision', roi)
             neuralnet.predict(image=roi)
             newimg = False
             key_input = pygame.key.get_pressed()
-            label = myfont.render("Esperando", 1, (255, 255, 0))
             # ordenes de dos teclas
             if next_direction == 1 and current_direction != 1:
                 control_connection.send(b"DOR")
