@@ -61,13 +61,12 @@ class NeuralNetwork(object):
         print("Modelo de red neuronal restaurado e iniciado.")
 
     def predict(self, image):
-        global next_direction
         # Decodificar las imagenes a tensores
         # Expand dimensions since the model expects images to have shape: [1, None, None, 1]
         image_np_expanded = np.expand_dims(image, axis=0)
         image_np_expanded = np.expand_dims(image_np_expanded, axis=3)
         y_pred = self.sess.run(self.Y, feed_dict={self.X: image_np_expanded})
-        next_direction = np.argmax(y_pred, 1)[0]
+        return np.argmax(y_pred, 1)[0]
 
 
 if __name__ == '__main__':
@@ -80,14 +79,6 @@ if __name__ == '__main__':
 
     print("Inicializando stream...")
 
-    server_video_socket = socket.socket()
-    server_video_socket.bind((server_ip, 8000))
-    print("Esperando conexion de video, inicie ahora camera_stream.py en el AutoBot...")
-    server_video_socket.listen()
-    video_connection, client_video_address = server_video_socket.accept()
-    video_connection = video_connection.makefile('rb')
-    print("Conexion establecida de video en", client_video_address)
-
     server_control_socket = socket.socket()
     server_control_socket.bind((server_ip, 8001))
     print("Esperando conexion de controlador del autobot, inicie ahora autobot.py en el AutoBot...")
@@ -95,6 +86,14 @@ if __name__ == '__main__':
     # creando conexion para enviar datos
     control_connection, client_control_address = server_control_socket.accept()
     print("Conexion establecida de video en", client_control_address)
+
+    server_video_socket = socket.socket()
+    server_video_socket.bind((server_ip, 8000))
+    print("Esperando conexion de video, inicie ahora camera_stream.py en el AutoBot...")
+    server_video_socket.listen()
+    video_connection, client_video_address = server_video_socket.accept()
+    video_connection = video_connection.makefile('rb')
+    print("Conexion establecida de video en", client_video_address)
 
     pygame.init()
     # bandera para el while
@@ -105,6 +104,7 @@ if __name__ == '__main__':
         screen = pygame.display.set_mode((200, 200), 0, 24)
         saved_frame = 0
         current_direction = -1
+        next_direction = -1
 
         while running:
             a1 = cv2.getTickCount()
@@ -128,8 +128,7 @@ if __name__ == '__main__':
             # mostrar la imagen
             # cv2.imshow('Computer Vision', roi)
             # cv2.imwrite('frame.jpg', roi)
-            neuralnet.predict(image=roi)
-            newimg = False
+            next_direction = neuralnet.predict(image=roi)
             key_input = pygame.key.get_pressed()
             # ordenes de dos teclas
             if next_direction == 1:
