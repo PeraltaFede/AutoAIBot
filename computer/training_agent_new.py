@@ -49,7 +49,6 @@ try:
     currentstate = 4  # 0 = izquierda ; 1 = derecha; 2 = delante ; 3 = reversa; 4 = stop
 
     while running:
-        a1 = cv2.getTickCount()
         # Read the length of the image as a 32-bit unsigned int. If the
         # length is zero, quit the loop
         image_len = struct.unpack('<L', video_connection.read(struct.calcsize('<L')))[0]
@@ -68,8 +67,6 @@ try:
         # region es Y, X
         roi = roi[120:240, :]
         # mostrar la imagen
-        cv2.imshow('Computer Vision', roi)
-        cv2.imwrite('frame', roi)
         total_frame += 1
         key_input = pygame.key.get_pressed()
         # ordenes de dos teclas
@@ -142,10 +139,6 @@ try:
         screen.blit(myfont.render(("Saved Frames: " + str(saved_frame)),
                                   1, (255, 255, 0)), (0, 30))
         pygame.display.flip()
-        a2 = cv2.getTickCount()
-        time1 = (a2-a1) / cv2.getTickFrequency()
-        print(time1)
-
 
 finally:
 
