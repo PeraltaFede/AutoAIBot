@@ -66,7 +66,7 @@ class NeuralNetwork(object):
         image_np_expanded = np.expand_dims(image, axis=0)
         image_np_expanded = np.expand_dims(image_np_expanded, axis=3)
         y_pred = self.sess.run(self.Y, feed_dict={self.X: image_np_expanded})
-        return np.argmax(y_pred, 1)[0]
+        return np.argmax(y_pred, 1)
 
 
 if __name__ == '__main__':
@@ -107,7 +107,6 @@ if __name__ == '__main__':
         next_direction = -1
 
         while running:
-            a1 = cv2.getTickCount()
             # Read the length of the image as a 32-bit unsigned int. If the
             # length is zero, quit the loop
             image_len = struct.unpack('<L', video_connection.read(struct.calcsize('<L')))[0]
@@ -167,10 +166,6 @@ if __name__ == '__main__':
             screen.fill((0, 0, 0))
             screen.blit(label, (0, 0))
             pygame.display.flip()
-
-            a2 = cv2.getTickCount()
-            time1 = (a2 - a1) / cv2.getTickFrequency()
-            print(time1)
 
     finally:
         pygame.quit()
