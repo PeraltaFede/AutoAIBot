@@ -15,14 +15,6 @@ if b"Fede Android" in subprocess.check_output("netsh wlan show interfaces"):
 
 print("Inicializando stream...")
 
-server_video_socket = socket.socket()
-server_video_socket.bind((server_ip, 8000))
-print("Esperando conexion de video, inicie ahora camera_stream.py en el AutoBot...")
-server_video_socket.listen()
-video_connection, client_video_address = server_video_socket.accept()
-video_connection = video_connection.makefile('rb')
-print("Conexion establecida de video en", client_video_address)
-
 server_control_socket = socket.socket()
 server_control_socket.bind((server_ip, 8001))
 print("Esperando conexion de controlador del autobot, inicie ahora autobot.py en el AutoBot...")
@@ -30,6 +22,14 @@ server_control_socket.listen()
 # creando conexion para enviar datos
 control_connection, client_control_address = server_control_socket.accept()
 print("Conexion establecida de video en", client_control_address)
+
+server_video_socket = socket.socket()
+server_video_socket.bind((server_ip, 8000))
+print("Esperando conexion de video, inicie ahora camera_stream.py en el AutoBot...")
+server_video_socket.listen()
+video_connection, client_video_address = server_video_socket.accept()
+video_connection = video_connection.makefile('rb')
+print("Conexion establecida de video en", client_video_address)
 
 pygame.init()
 # bandera para el while
