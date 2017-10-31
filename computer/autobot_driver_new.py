@@ -121,13 +121,14 @@ if __name__ == '__main__':
             image_stream.seek(0)
 
             jpg = image_stream.read()
+            img = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
             roi = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
             # region es Y, X
             roi = roi[120:240, :]
             # mostrar la imagen
             # cv2.imshow('Computer Vision', roi)
             # cv2.imwrite('frame.jpg', roi)
-            next_direction = neuralnet.predict(image=roi)
+            next_direction = neuralnet.predict(image=roi)[0]
             key_input = pygame.key.get_pressed()
             # ordenes de dos teclas
             if next_direction == 1:
@@ -156,13 +157,16 @@ if __name__ == '__main__':
                 control_connection.send(b"DOS")
                 current_direction = -1
 
-            key_input = pygame.key.get_pressed()
+            for _ in pygame.event.get():
+                _ = pygame.key.get_pressed()
+
             if key_input[pygame.K_x] or key_input[pygame.K_q]:
                 print("Detener el programa")
                 control_connection.send(b"DOE")
                 running = False
                 break
 
+            cv2.imshow('Computer Vision', img)
             screen.fill((0, 0, 0))
             screen.blit(label, (0, 0))
             pygame.display.flip()
